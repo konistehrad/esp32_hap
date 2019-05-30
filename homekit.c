@@ -3,7 +3,9 @@
 #include "utils/hk_store.h"
 #include "hk_server.h"
 #include "hk_mdns.h"
+#include "hk_accessories_serializer.h"
 #include "hk_accessories_store.h"
+#include "hk_characteristics.h"
 #include "hk_pairings_store.h"
 
 void hk_init(const char *name, hk_categories_t category, const char *code, esp_log_level_t log_level)
@@ -36,26 +38,36 @@ void hk_setup_add_accessory(const char *name, const char *manufacturer, const ch
     hk_accessories_store_add_characteristic(HK_CHR_IDENTIFY, NULL, identify, false);
 }
 
-void hk_setup_add_service(hk_services_t service_type, bool primary, bool hidden)
+void hk_setup_add_service(hk_service_types_t service_type, bool primary, bool hidden)
 {
     hk_accessories_store_add_service(service_type, primary, hidden);
 }
 
-void hk_setup_add_characteristic(hk_characteristics_t type, void *(*read)(), void (*write)(void *), bool can_notify)
+void *hk_setup_add_characteristic(hk_characteristic_types_t type, void *(*read)(), void (*write)(void *), bool can_notify)
 {
-    hk_accessories_store_add_characteristic(type, read, write, can_notify);
+    return hk_accessories_store_add_characteristic(type, read, write, can_notify);
 }
 
 void hk_setup_finish()
 {
     hk_accessories_store_end_config();
     ESP_LOGI("homekit", "Set up.");
+
+    hk_mem *accessories_string = hk_mem_create();
+    hk_accessories_serializer_accessories(accessories_string);
+    hk_mem_log("Accessories", accessories_string);
+    hk_mem_free(accessories_string);
 }
 
 void hk_reset()
 {
-    HK_LOGD("Resetting homekit for this device.");
+    HK_LOGW("Resetting homekit for this device.");
     hk_pairings_store_remove_all();
     hk_store_is_paired_set(false);
     hk_mdns_update_paired(false);
+}
+
+void hk_notify(void *characteristic)
+{
+    hk_characteristics_notify(characteristic);
 }

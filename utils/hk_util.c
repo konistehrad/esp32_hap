@@ -15,8 +15,8 @@ size_t hk_util_get_accessory_id(hk_mem *id)
 
     char accessory_id[18];
     sprintf(accessory_id, "%2X:%2X:%2X:%2X:%2X:%2X", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
-    //todo: hk_mem_append_buffer(id, accessory_id, 17);
-    hk_mem_append_buffer(id, "00:00:00:00:01:32", 17);
+    hk_mem_append_buffer(id, accessory_id, 17);
+    //hk_mem_append_buffer(id, "00:00:00:00:01:32", 17);
 
     return ret;
 }

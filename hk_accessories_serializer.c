@@ -118,7 +118,7 @@ void hk_accessories_serializer_characteristic(hk_characteristic_t *characteristi
     };
     sprintf(type, HAP_UUID, characteristic->type);
     cJSON_AddStringToObject(j_characteristic, "type", type);
-    cJSON_AddNumberToObject(j_characteristic, "iid", characteristic->id);
+    cJSON_AddNumberToObject(j_characteristic, "iid", characteristic->iid);
 
     hk_accessories_serializer_perms(characteristic, j_characteristic);
     hk_accessories_serializer_format(characteristic, j_characteristic);
@@ -135,7 +135,7 @@ void hk_accessories_serializer_service(hk_service_t *service, cJSON *j_services)
     };
     sprintf(type, HAP_UUID, service->type); //todo: check if full type is needed
     cJSON_AddStringToObject(j_service, "type", type);
-    cJSON_AddNumberToObject(j_service, "iid", service->id);
+    cJSON_AddNumberToObject(j_service, "iid", service->iid);
     cJSON_AddBoolToObject(j_service, "primary", service->primary);
     //cJSON_AddBoolToObject(j_service, "hidden", service->hidden);
 
@@ -151,7 +151,7 @@ void hk_accessories_serializer_service(hk_service_t *service, cJSON *j_services)
 void hk_accessories_serializer_accessory(hk_accessory_t *accessory, cJSON *j_accessories)
 {
     cJSON *j_accessory = cJSON_CreateObject();
-    cJSON_AddNumberToObject(j_accessory, "aid", accessory->id);
+    cJSON_AddNumberToObject(j_accessory, "aid", accessory->aid);
     cJSON_AddItemToArray(j_accessories, j_accessory);
 
     cJSON *j_services = cJSON_CreateArray();

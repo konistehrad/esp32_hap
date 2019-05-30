@@ -63,17 +63,59 @@ void hk_characteristics_get(hk_session_t *session)
     {
         char *serialized = cJSON_PrintUnformatted(j_root);
         hk_mem_append_string(session->response->content, (const char *)serialized);
-        HK_LOGD("%d - %s", session->socket, serialized);
         free(serialized);
     }
 
-    HK_LOGD("%d - Sending value for characteristic %d.%d.", session->socket, results[0], results[1]);
+    HK_LOGD("%d - Returning value for characteristic %d.%d.", session->socket, results[0], results[1]);
     hk_session_send(session);
     hk_mem_free(ids);
     cJSON_Delete(j_root);
 }
 
-esp_err_t hk_characteristics_notify(hk_session_t *session, cJSON *j_root)
+void hk_characteristics_notify(void *characteristic_ptr)
+{
+    if (!characteristic_ptr)
+    {
+        HK_LOGE("No characteristic was given, to notify.");
+        return;
+    }
+
+    hk_characteristic_t *characteristic = (hk_characteristic_t *)characteristic_ptr;
+    hk_session_t *session = characteristic->session;
+
+    if (!session)
+    {
+        HK_LOGD("Cant notify, because no connection was established.");
+        return;
+    }
+
+    const double aid = characteristic->aid;
+    const double iid = characteristic->iid;
+
+    cJSON *j_characteristic = cJSON_CreateObject();
+    cJSON_AddNumberToObject(j_characteristic, "aid", aid);
+    cJSON_AddNumberToObject(j_characteristic, "iid", iid);
+    hk_accessories_serializer_value(characteristic, j_characteristic);
+
+    cJSON *j_characteristics = cJSON_CreateArray();
+    cJSON_AddItemToArray(j_characteristics, j_characteristic);
+
+    cJSON *j_root = cJSON_CreateObject();
+    cJSON_AddItemToObject(j_root, "characteristics", j_characteristics);
+
+    char *serialized = cJSON_PrintUnformatted(j_root);
+    hk_mem_append_string(session->response->content, (const char *)serialized);
+    free(serialized);
+    cJSON_Delete(j_root);
+
+    hk_html_append_response_start(session, HK_HTML_PROT_EVENT, HK_HTML_200);
+    hk_html_append_header(session, "Content-Type", HK_HTML_CONTENT_JSON);
+    HK_LOGD("%d - Sending change notification.", session->socket);
+
+    hk_html_response_send(session);
+}
+
+esp_err_t hk_characteristics_notify_after_subscription(hk_session_t *session, cJSON *j_root) 
 {
     esp_err_t ret = ESP_OK;
 
@@ -98,7 +140,7 @@ esp_err_t hk_characteristics_notify(hk_session_t *session, cJSON *j_root)
         }
 
         hk_accessories_serializer_value(characteristic, j_characteristic);
-        cJSON_AddItemToObject(j_characteristic, "status", cJSON_CreateNumber(0));
+        cJSON_AddItemToObject(j_characteristic, "status", cJSON_CreateNumber(0)); //todo: needed?
     }
 
     if (ret == ESP_OK)
@@ -109,7 +151,7 @@ esp_err_t hk_characteristics_notify(hk_session_t *session, cJSON *j_root)
 
         hk_html_append_response_start(session, HK_HTML_PROT_EVENT, HK_HTML_200);
         hk_html_append_header(session, "Content-Type", HK_HTML_CONTENT_JSON);
-        HK_LOGD("%d - Sending change notification.", session->socket);
+        HK_LOGD("%d - Sending change notification after subscription.", session->socket);
 
         hk_html_response_send(session);
     }
@@ -249,7 +291,7 @@ void hk_characteristic_subscribe(hk_session_t *session, cJSON *j_root, cJSON *j_
 
     hk_html_response_send_empty(session, HK_HTML_204);
 
-    hk_characteristics_notify(session, j_root);
+    hk_characteristics_notify_after_subscription(session, j_root);
 }
 
 void hk_characteristics_put(hk_session_t *session)

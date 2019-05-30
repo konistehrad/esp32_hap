@@ -3,7 +3,6 @@
 #include "../utils/hk_logging.h"
 
 #define WOLFSSL_USER_SETTINGS
-#define WOLFCRYPT_HAVE_SRP
 #include <wolfssl/wolfcrypt/settings.h>
 #include <wolfssl/wolfcrypt/sha512.h>
 #include <wolfssl/wolfcrypt/srp.h>

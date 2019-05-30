@@ -15,7 +15,7 @@ void hk_accessories_store_add_accessory()
     hk_accessories->services = NULL;
 }
 
-void hk_accessories_store_add_service(hk_services_t type, bool primary, bool hidden)
+void hk_accessories_store_add_service(hk_service_types_t type, bool primary, bool hidden)
 {
     hk_service_t *service = hk_ll_new(hk_accessories->services);
 
@@ -27,7 +27,7 @@ void hk_accessories_store_add_service(hk_services_t type, bool primary, bool hid
     hk_accessories->services = service;
 }
 
-void hk_accessories_store_add_characteristic(hk_characteristics_t type, void *(*read)(), void (*write)(void *), bool can_notify)
+void *hk_accessories_store_add_characteristic(hk_characteristic_types_t type, void *(*read)(), void (*write)(void *), bool can_notify)
 {
     hk_characteristic_t *characteristic = hk_ll_new(hk_accessories->services->characteristics);
 
@@ -35,11 +35,14 @@ void hk_accessories_store_add_characteristic(hk_characteristics_t type, void *(*
     characteristic->static_value = NULL;
     characteristic->read = read;
     characteristic->write = write;
+    characteristic->session = NULL;
 
     hk_accessories->services->characteristics = characteristic;
+
+    return characteristic;
 }
 
-void hk_accessories_store_add_characteristic_static_read(hk_characteristics_t type, void *value)
+void hk_accessories_store_add_characteristic_static_read(hk_characteristic_types_t type, void *value)
 {
     hk_characteristic_t *characteristic = hk_ll_new(hk_accessories->services->characteristics);
 
@@ -62,19 +65,20 @@ void hk_accessories_store_end_config()
         hk_ll_foreach(hk_accessories, accessory)
         {
             iid = 0;
-            accessory->id = ++aid;
+            accessory->aid = ++aid;
             if (accessory->services)
             {
                 accessory->services = hk_ll_reverse(accessory->services);
                 hk_ll_foreach(accessory->services, service)
                 {
-                    service->id = ++iid;
+                    service->iid = ++iid;
                     if (service->characteristics)
                     {
                         service->characteristics = hk_ll_reverse(service->characteristics);
                         hk_ll_foreach(service->characteristics, characteristic)
                         {
-                            characteristic->id = ++iid;
+                            characteristic->iid = ++iid;
+                            characteristic->aid = accessory->aid;
                         }
                     }
                 }
@@ -89,7 +93,7 @@ hk_characteristic_t *hk_accessories_store_get_characteristic(size_t aid, size_t 
     {
         hk_ll_foreach(hk_accessories, accessory)
         {
-            if (aid == accessory->id && accessory->services)
+            if (aid == accessory->aid && accessory->services)
             {
                 hk_ll_foreach(accessory->services, service)
                 {
@@ -97,7 +101,7 @@ hk_characteristic_t *hk_accessories_store_get_characteristic(size_t aid, size_t 
                     {
                         hk_ll_foreach(service->characteristics, characteristic)
                         {
-                            if (iid == characteristic->id)
+                            if (iid == characteristic->iid)
                             {
                                 return characteristic;
                             }
@@ -139,7 +143,7 @@ hk_characteristic_t *hk_accessories_store_get_identify_characteristic()
     return NULL;
 }
 
-hk_format_t hk_accessories_store_get_format(hk_characteristics_t characteristic_type)
+hk_format_t hk_accessories_store_get_format(hk_characteristic_types_t characteristic_type)
 {
     switch (characteristic_type)
     {
@@ -266,7 +270,8 @@ hk_format_t hk_accessories_store_get_format(hk_characteristics_t characteristic_
     }
 }
 
-void hk_accessories_free(){
+void hk_accessories_free()
+{
     // we do not free ressources, because this method is used in unit testing only
     hk_accessories = NULL;
 }

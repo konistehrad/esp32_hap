@@ -81,13 +81,13 @@ void hk_pairings(hk_session_t *session)
         switch (*method_tlv->value)
         {
         case 3:
-            HK_LOGW("Todo implement add.");
+            HK_LOGE("Adding a second device is not implemented at the moment.");
             break;
         case 4:
             hk_pairings_remove(tlv_data, session->response->data);
             break;
         case 5:
-            HK_LOGW("Todo implement list.");
+            HK_LOGE("Listing devices is not implemented at the moment.");
             break;
         default:
             HK_LOGE("Unexpected value in tlv in pairing: %d", *type_tlv->value);

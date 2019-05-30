@@ -23,7 +23,7 @@ TEST_CASE("Accessories: check getting characteristic", "[accessories]")
     hk_characteristic_t *c = hk_accessories_store_get_characteristic(1,2);
     TEST_ASSERT_NOT_NULL(c);
     HK_LOGD("Found c %x, %x, %x",c->type, HK_CHR_NAME, HK_CHR_MANUFACTURER);
-    TEST_ASSERT_EQUAL_INT(2, c->id);
+    TEST_ASSERT_EQUAL_INT(2, c->iid);
     TEST_ASSERT_EQUAL_INT(HK_CHR_NAME, c->type);
 
     c = hk_accessories_store_get_characteristic(1,4);

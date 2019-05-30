@@ -218,6 +218,7 @@ void hk_com_task(void *args_ptr)
                 HK_LOGD("%d - Closing connection.", connection->socket);
                 FD_CLR(connection->socket, &current_fds); // clear socket in buffer
                 lwip_close(connection->socket);
+                hk_session_free(connection);
                 hk_session_t *next = hk_ll_next(connection);
                 connections = hk_ll_remove(connections, connection);
                 connection_count--;
