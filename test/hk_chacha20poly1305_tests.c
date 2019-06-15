@@ -3,11 +3,11 @@
 #include "../crypto/hk_curve25519.h"
 #include "../crypto/hk_chacha20poly1305.h"
 #include "../utils/hk_mem.h"
-#include "../utils/hk_heap.h"
+
 
 TEST_CASE("export key", "[crypto, curve25519]")
 {
-    hk_heap_check_start();
+    
     hk_curve25519_key_t *curve = hk_curve25519_init_key();
     hk_mem *key = hk_mem_create();
     hk_mem *message = hk_mem_create();
@@ -27,5 +27,5 @@ TEST_CASE("export key", "[crypto, curve25519]")
     hk_mem_free(message);
     hk_mem_free(encrypted);
     hk_mem_free(decrypted);
-    TEST_ASSERT_TRUE(hk_heap_check_end());
+    
 }

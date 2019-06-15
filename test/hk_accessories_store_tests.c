@@ -2,7 +2,7 @@
 
 #include "../utils/hk_logging.h"
 #include "../utils/hk_mem.h"
-#include "../utils/hk_heap.h"
+
 
 #include "../hk_accessories_store.h"
 #include "../hk_accessories.h"
@@ -18,7 +18,7 @@ TEST_CASE("Accessories: check getting characteristic", "[accessories]")
     hk_accessories_store_add_service(HK_SRV_AIR_PURIFIER, true, false);
     hk_accessories_store_end_config();
 
-    hk_heap_check_start();
+    
 
     hk_characteristic_t *c = hk_accessories_store_get_characteristic(1,2);
     TEST_ASSERT_NOT_NULL(c);
@@ -32,6 +32,6 @@ TEST_CASE("Accessories: check getting characteristic", "[accessories]")
     c = hk_accessories_store_get_characteristic(2,4);
     TEST_ASSERT_NULL(c);
 
-    TEST_ASSERT_TRUE(hk_heap_check_end());
+    
     hk_accessories_free();
 }

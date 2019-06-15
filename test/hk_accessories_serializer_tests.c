@@ -2,7 +2,7 @@
 
 #include "../utils/hk_logging.h"
 #include "../utils/hk_mem.h"
-#include "../utils/hk_heap.h"
+
 
 #include "../hk_accessories_serializer.h"
 #include "../hk_accessories.h"
@@ -22,14 +22,11 @@ TEST_CASE("Accessories Serializer: check", "[accessories]")
     hk_accessories_store_add_characteristic(HK_CHR_IDENTIFY, NULL, hk_accessories_serializer_tests_dummy, NULL);
     hk_accessories_store_end_config();
 
-    hk_heap_check_start();
-
     hk_mem *out = hk_mem_create();
     hk_accessories_serializer_accessories(out);
     hk_mem_log("Accessories", out);
     TEST_ASSERT_GREATER_THAN_INT(0, out->size);
     hk_mem_free(out);
     
-    TEST_ASSERT_TRUE(hk_heap_check_end());
     hk_accessories_free();
 }

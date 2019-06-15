@@ -2,32 +2,32 @@
 
 #include "../crypto/hk_ed25519.h"
 #include "../utils/hk_mem.h"
-#include "../utils/hk_heap.h"
+
 
 TEST_CASE("Ed25519: generate key", "[crypto, ed25519]")
 {
-    hk_heap_check_start();
+    
     hk_ed25519_key_t* key = hk_ed25519_init_key();
     size_t ret = hk_ed25519_generate_key(key);
     
     TEST_ASSERT_FALSE(ret);
 
     hk_ed25519_free_key(key);
-    TEST_ASSERT_TRUE(hk_heap_check_end());
+    
 }
 
 TEST_CASE("Ed25519: free ininitialized key", "[crypto, ed25519]")
 {
-    hk_heap_check_start();
+    
     hk_ed25519_key_t *key = hk_ed25519_init_key();
 
     hk_ed25519_free_key(key);
-    TEST_ASSERT_TRUE(hk_heap_check_end());
+    
 }
 
 TEST_CASE("Ed25519: sign and verify", "[crypto, ed25519]")
 {
-    hk_heap_check_start();
+    
     hk_ed25519_key_t *key = hk_ed25519_init_key();
     hk_mem* signature = hk_mem_create();
     hk_mem* message = hk_mem_create();
@@ -40,12 +40,12 @@ TEST_CASE("Ed25519: sign and verify", "[crypto, ed25519]")
     hk_ed25519_free_key(key);
     hk_mem_free(signature);
     hk_mem_free(message);
-    TEST_ASSERT_TRUE(hk_heap_check_end());
+    
 }
 
 TEST_CASE("Ed25519: sign and verify with export and import of public key", "[crypto, ed25519]")
 {
-    hk_heap_check_start();
+    
     hk_ed25519_key_t *key = hk_ed25519_init_key();
     hk_ed25519_key_t *key_imported = hk_ed25519_init_key();
     hk_mem* signature = hk_mem_create();
@@ -65,12 +65,12 @@ TEST_CASE("Ed25519: sign and verify with export and import of public key", "[cry
     hk_mem_free(public_key);
     hk_mem_free(signature);
     hk_mem_free(message);
-    TEST_ASSERT_TRUE(hk_heap_check_end());
+    
 }
 
 TEST_CASE("Ed25519: sign and verify with export and import of public and private keys", "[crypto, ed25519]")
 {
-    hk_heap_check_start();
+    
     hk_ed25519_key_t *key = hk_ed25519_init_key();
     hk_ed25519_key_t *key_imported = hk_ed25519_init_key();
     hk_ed25519_key_t *key_imported_public = hk_ed25519_init_key();
@@ -97,5 +97,5 @@ TEST_CASE("Ed25519: sign and verify with export and import of public and private
     hk_mem_free(private_key);
     hk_mem_free(signature);
     hk_mem_free(message);
-    TEST_ASSERT_TRUE(hk_heap_check_end());
+    
 }

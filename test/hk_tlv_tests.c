@@ -2,7 +2,7 @@
 
 #include "../utils/hk_tlv.h"
 #include "../utils/hk_mem.h"
-#include "../utils/hk_heap.h"
+
 
 #include <string.h>
 #include <esp_heap_caps.h>
@@ -18,7 +18,7 @@ hk_tlv_t* append_string(hk_tlv_t *tlv, const char* str, char type){
 
 TEST_CASE("Tlv: full run", "[tlv]")
 {
-    hk_heap_check_start();
+    
     hk_tlv_t *input_tlv = NULL;
     hk_tlv_t *output_tlv = NULL;
     hk_mem *data = hk_mem_create();
@@ -41,12 +41,12 @@ TEST_CASE("Tlv: full run", "[tlv]")
     hk_mem_free(item);
     hk_tlv_free(input_tlv);
     hk_tlv_free(output_tlv);
-    TEST_ASSERT_TRUE(hk_heap_check_end());
+    
 }
 
 TEST_CASE("Tlv: simple add", "[tlv]")
 {
-    hk_heap_check_start();
+    
     hk_tlv_t *tlv = NULL;
 
     const char* str = "bla";
@@ -56,5 +56,5 @@ TEST_CASE("Tlv: simple add", "[tlv]")
     tlv = hk_tlv_add(tlv, 1, mem);
     hk_tlv_free(tlv);
     hk_mem_free(mem);
-    TEST_ASSERT_TRUE(hk_heap_check_end());
+    
 }

@@ -1,7 +1,7 @@
 #include "unity.h"
 #include "../utils/hk_mem.h"
 #include "../utils/hk_store.h"
-#include "../utils/hk_heap.h"
+
 #include <string.h>
 #include <esp_system.h>
 #include <nvs_flash.h>
@@ -15,7 +15,7 @@ void hk_store_bool_set(const char *key, bool value);
 TEST_CASE("Store: check writing/reading string as blob.", "[store]")
 {
     TEST_ASSERT_FALSE(hk_store_init());
-    //hk_heap_check_start();
+    //
 
     const char *str = "my_value";
     hk_mem *input = hk_mem_create();
@@ -30,14 +30,14 @@ TEST_CASE("Store: check writing/reading string as blob.", "[store]")
     hk_mem_free(input);
     hk_mem_free(result);
 
-    //TEST_ASSERT_TRUE(hk_heap_check_end());
+    //
     hk_store_free();
 }
 
 TEST_CASE("Store: check writing/reading byte array.", "[store]")
 {
     TEST_ASSERT_FALSE(hk_store_init());
-    //hk_heap_check_start();
+    //
     char buffer[] = {
         0xde,
         0xf0,
@@ -85,14 +85,14 @@ TEST_CASE("Store: check writing/reading byte array.", "[store]")
 
     hk_mem_free(input);
     hk_mem_free(result);
-    //TEST_ASSERT_TRUE(hk_heap_check_end());
+    //
     hk_store_free();
 }
 
 TEST_CASE("Store: check writing/reading bool.", "[store]")
 {
     TEST_ASSERT_FALSE(hk_store_init());
-    //hk_heap_check_start();
+    //
 
     bool result;
 
@@ -104,7 +104,7 @@ TEST_CASE("Store: check writing/reading bool.", "[store]")
     hk_store_bool_get("bool2", &result);
     TEST_ASSERT_FALSE(result);
 
-    //TEST_ASSERT_TRUE(hk_heap_check_end());
+    //
     hk_store_free();
 }
 
@@ -112,7 +112,7 @@ TEST_CASE("Store: check writing/reading is paired.", "[store]")
 {
     TEST_ASSERT_FALSE(nvs_flash_erase());
     TEST_ASSERT_FALSE(hk_store_init());
-    //hk_heap_check_start();
+    //
 
     TEST_ASSERT_FALSE(hk_store_is_paired_get()); // check uninitialized
     hk_store_is_paired_set(true);
@@ -120,7 +120,7 @@ TEST_CASE("Store: check writing/reading is paired.", "[store]")
     hk_store_is_paired_set(false);
     TEST_ASSERT_FALSE(hk_store_is_paired_get());
 
-    //TEST_ASSERT_TRUE(hk_heap_check_end());
+    //
     hk_store_free();
 }
 
@@ -128,7 +128,7 @@ TEST_CASE("Store: check writing/reading of keys.", "[store]")
 {
     TEST_ASSERT_FALSE(nvs_flash_erase());
     TEST_ASSERT_FALSE(hk_store_init());
-    //hk_heap_check_start();
+    //
 
     const char *priv_str = "my_priv_value";
     hk_mem *priv_in = hk_mem_create();
@@ -156,6 +156,6 @@ TEST_CASE("Store: check writing/reading of keys.", "[store]")
     hk_mem_free(priv_out);
     hk_mem_free(pub_in);
     hk_mem_free(pub_out);
-    //TEST_ASSERT_TRUE(hk_heap_check_end());
+    //
     hk_store_free();
 }

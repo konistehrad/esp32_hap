@@ -9,7 +9,7 @@ ESP-32 implementation of Apple Homekit Accessory Protocol(HAP)
 3.2.1. Open terminal with esp env vars set
 3.2.2. Execute setup.sh from <path to wolfssl>/IDE/Espressif/ESP-IDF
 3.3: Adapt user_settings.h in <path to esp idf>/components/wolfssl/include/user_settings.h by appending the following lines:
-#include <esp_system.h>
+/#include <esp_system.h>
 static inline int hwrand_generate_block(uint8_t *buf, size_t len) {
     int i;
     for (i=0; i+4 < len; i+=4) {
@@ -27,8 +27,16 @@ static inline int hwrand_generate_block(uint8_t *buf, size_t len) {
 
     return 0;
 }
-#define CUSTOM_RAND_GENERATE_BLOCK hwrand_generate_block
-4. Create an application and init it
+/#define CUSTOM_RAND_GENERATE_BLOCK hwrand_generate_block
+4. clone esp32-homekit into esp-idf/components: git clone https://github.com/slompf18/esp32-homekit.git 
+5. Create an application and init it
+
+## Unit testing
+1. Setup unit test app: https://docs.espressif.com/projects/esp-idf/en/latest/api-guides/unit-tests.html
+2. In make menuconfig enable the following points under Component config->Heap memory debugging
+- Enable heap tracing (2)
+- Enable heap task tracking
+2. Compile and start unit test app: make flash monitor TEST_COMPONENTS='esp32-homekit'
 
 ## Debugging
 ### How to WireShark the IOs Device

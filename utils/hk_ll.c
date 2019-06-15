@@ -1,6 +1,5 @@
 #include <stdlib.h>
 #include "hk_ll.h"
-#include "hk_logging.h"
 
 #define hk_ll_next_ptr(ptr) (*ptr)
 #define hk_ll_data_to_next_ptr(data_ptr) (((void **)data_ptr) - 1)
@@ -39,7 +38,7 @@ void *hk_ll_reverse(void *data)
     return prev_data;
 }
 
-void* hk_ll_remove(void *list, void *data_to_remove)
+void *hk_ll_remove(void *list, void *data_to_remove)
 {
     void *current_data = list, *prev_data = NULL;
     void **current_ptr = NULL, **prev_ptr = NULL;
@@ -54,10 +53,12 @@ void* hk_ll_remove(void *list, void *data_to_remove)
             {
                 prev_ptr = hk_ll_data_to_next_ptr(prev_data);
                 *prev_ptr = next_data;
-            }else{
+            }
+            else
+            {
                 list = next_data;
             }
-            
+
             free(current_ptr);
             return list;
         }
@@ -67,7 +68,7 @@ void* hk_ll_remove(void *list, void *data_to_remove)
             current_data = _hk_ll_next(current_data);
         }
     }
-    
+
     return list;
 }
 

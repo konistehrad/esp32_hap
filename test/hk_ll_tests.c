@@ -1,7 +1,6 @@
 #include "unity.h"
 
 #include "../utils/hk_ll.h"
-#include "../utils/hk_heap.h"
 #include "../utils/hk_logging.h"
 
 typedef struct
@@ -12,7 +11,7 @@ typedef struct
 
 TEST_CASE("Ll: create and free", "[ll]")
 {
-    hk_heap_check_start();
+    
     hk_ll_test_t *list = NULL;
 
     list = hk_ll_new(list);
@@ -22,12 +21,12 @@ TEST_CASE("Ll: create and free", "[ll]")
     TEST_ASSERT_EQUAL_INT(3, hk_ll_count(list));
 
     hk_ll_free(list);
-    TEST_ASSERT_TRUE(hk_heap_check_end());
+    
 }
 
 TEST_CASE("Ll: iterate", "[ll]")
 {
-    hk_heap_check_start();
+    
     hk_ll_test_t *list = NULL;
 
     list = hk_ll_new(list);
@@ -48,12 +47,12 @@ TEST_CASE("Ll: iterate", "[ll]")
     TEST_ASSERT_EQUAL_INT(-1, count);
 
     hk_ll_free(list);
-    TEST_ASSERT_TRUE(hk_heap_check_end());
+    
 }
 
 TEST_CASE("Ll: reverse", "[ll]")
 {
-    hk_heap_check_start();
+    
     hk_ll_test_t *list = NULL;
 
     list = hk_ll_new(list);
@@ -76,12 +75,12 @@ TEST_CASE("Ll: reverse", "[ll]")
     TEST_ASSERT_EQUAL_INT(2, count);
 
     hk_ll_free(list);
-    TEST_ASSERT_TRUE(hk_heap_check_end());
+    
 }
 
 TEST_CASE("Ll: remove first", "[ll]")
 {
-    hk_heap_check_start();
+    
     hk_ll_test_t *list = NULL;
 
     list = hk_ll_new(list);
@@ -101,12 +100,12 @@ TEST_CASE("Ll: remove first", "[ll]")
     TEST_ASSERT_EQUAL_INT(item1->data, list->data);
 
     hk_ll_free(list);
-    TEST_ASSERT_TRUE(hk_heap_check_end());
+    
 }
 
 TEST_CASE("Ll: remove middle", "[ll]")
 {
-    hk_heap_check_start();
+    
     hk_ll_test_t *list = NULL;
 
     list = hk_ll_new(list);
@@ -133,12 +132,12 @@ TEST_CASE("Ll: remove middle", "[ll]")
     TEST_ASSERT_EQUAL_INT(item0->data, item->data);
 
     hk_ll_free(list);
-    TEST_ASSERT_TRUE(hk_heap_check_end());
+    
 }
 
 TEST_CASE("Ll: remove last", "[ll]")
 {
-    hk_heap_check_start();
+    
     hk_ll_test_t *list = NULL;
 
     list = hk_ll_new(list);
@@ -165,12 +164,11 @@ TEST_CASE("Ll: remove last", "[ll]")
     TEST_ASSERT_EQUAL_INT(item1->data, item->data);
 
     hk_ll_free(list);
-    TEST_ASSERT_TRUE(hk_heap_check_end());
+    
 }
 
 TEST_CASE("Ll: remove odd in iteration", "[ll]")
 {
-    hk_heap_check_start();
     hk_ll_test_t *list = NULL;
     list = hk_ll_new(list);
     list = hk_ll_new(list);
@@ -205,12 +203,11 @@ TEST_CASE("Ll: remove odd in iteration", "[ll]")
     TEST_ASSERT_EQUAL_INT(expected_list_after_delete, list);
 
     hk_ll_free(list);
-    TEST_ASSERT_TRUE(hk_heap_check_end());
+    
 }
 
 TEST_CASE("Ll: remove even in iteration", "[ll]")
 {
-    hk_heap_check_start();
     hk_ll_test_t *list = NULL;
     list = hk_ll_new(list);
     list = hk_ll_new(list);
@@ -245,5 +242,4 @@ TEST_CASE("Ll: remove even in iteration", "[ll]")
     TEST_ASSERT_EQUAL_INT(expected_list_after_delete, list);
 
     hk_ll_free(list);
-    TEST_ASSERT_TRUE(hk_heap_check_end());
 }

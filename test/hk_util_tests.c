@@ -2,11 +2,11 @@
 
 #include "../utils/hk_util.h"
 #include "../utils/hk_mem.h"
-#include "../utils/hk_heap.h"
+
 
 TEST_CASE("Util: get accessory id", "[util]")
 {
-    hk_heap_check_start();
+    
     hk_mem* mac1 = hk_mem_create();
     hk_mem* mac2 = hk_mem_create();
     size_t ret = hk_util_get_accessory_id(mac1);
@@ -19,5 +19,5 @@ TEST_CASE("Util: get accessory id", "[util]")
     hk_mem_free(mac1);
     hk_mem_free(mac2);
     
-    TEST_ASSERT_TRUE(hk_heap_check_end());
+    
 }

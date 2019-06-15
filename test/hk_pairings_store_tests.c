@@ -3,14 +3,14 @@
 #include "../utils/hk_mem.h"
 #include "../utils/hk_store.h"
 #include "../utils/hk_logging.h"
-#include "../utils/hk_heap.h"
+
 
 #include "../hk_pairings_store.h"
 
 TEST_CASE("Pairings store: add to empty", "[pairings_store]")
 {
     TEST_ASSERT_FALSE(hk_store_init());
-    //hk_heap_check_start();
+    //
 
     hk_pairings_store_remove_all();
     hk_mem *device_id = hk_mem_create();
@@ -23,14 +23,14 @@ TEST_CASE("Pairings store: add to empty", "[pairings_store]")
     hk_mem_free(device_id);
     hk_mem_free(device_ltpk);
 
-    //TEST_ASSERT_TRUE(hk_heap_check_end());
+    //
     hk_store_free();
 }
 
 TEST_CASE("Pairings store: get ltpk", "[pairings_store]")
 {
     TEST_ASSERT_FALSE(hk_store_init());
-    //hk_heap_check_start();
+    //
 
     hk_pairings_store_remove_all();
     hk_mem *device_id = hk_mem_create();
@@ -49,14 +49,14 @@ TEST_CASE("Pairings store: get ltpk", "[pairings_store]")
     hk_mem_free(device_ltpk);
     hk_mem_free(device_ltpk_result);
 
-    //TEST_ASSERT_TRUE(hk_heap_check_end());
+    //
     hk_store_free();
 }
 
 TEST_CASE("Pairings store: remove pairing", "[pairings_store]")
 {
     TEST_ASSERT_FALSE(hk_store_init());
-    //hk_heap_check_start();
+    //
 
     hk_pairings_store_remove_all();
     hk_mem *device_id = hk_mem_create();
@@ -79,14 +79,14 @@ TEST_CASE("Pairings store: remove pairing", "[pairings_store]")
     hk_mem_free(device_ltpk);
     hk_mem_free(device_ltpk_result);
 
-    //TEST_ASSERT_TRUE(hk_heap_check_end());
+    //
     hk_store_free();
 }
 
 TEST_CASE("Pairings store: check for admin pairing", "[pairings_store]")
 {
     TEST_ASSERT_FALSE(hk_store_init());
-    //hk_heap_check_start();
+    //
 
     hk_pairings_store_remove_all();
     hk_mem *device_id1 = hk_mem_create();
@@ -108,14 +108,14 @@ TEST_CASE("Pairings store: check for admin pairing", "[pairings_store]")
     hk_mem_free(device_id2);
     hk_mem_free(device_ltpk2);
 
-    //TEST_ASSERT_TRUE(hk_heap_check_end());
+    //
     hk_store_free();
 }
 
 TEST_CASE("Pairings store: check for admin pairing with device id", "[pairings_store]")
 {
     TEST_ASSERT_FALSE(hk_store_init());
-    //hk_heap_check_start();
+    //
 
     hk_pairings_store_remove_all();
     hk_mem *device_id1 = hk_mem_create();
@@ -138,6 +138,6 @@ TEST_CASE("Pairings store: check for admin pairing with device id", "[pairings_s
     hk_mem_free(device_id2);
     hk_mem_free(device_ltpk2);
 
-    //TEST_ASSERT_TRUE(hk_heap_check_end());
+    //
     hk_store_free();
 }
