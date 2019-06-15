@@ -4,11 +4,13 @@
 #include "include/homekit_characteristics.h"
 #include "utils/hk_logging.h"
 #include "utils/hk_res.h"
+#include "utils/hk_ll.h"
 #include "hk_html.h"
 #include "hk_html_parser.h"
 #include "hk_accessories.h"
 #include "hk_accessories_serializer.h"
 #include "hk_accessories_store.h"
+#include "hk_subscription_store.h"
 
 #include <cJSON.h>
 #include <stdbool.h>
@@ -81,11 +83,11 @@ void hk_characteristics_notify(void *characteristic_ptr)
     }
 
     hk_characteristic_t *characteristic = (hk_characteristic_t *)characteristic_ptr;
-    hk_session_t *session = characteristic->session;
+    hk_session_t **session_list = hk_subscription_store_get_sessions(characteristic);
 
-    if (!session)
+    if (session_list == NULL)
     {
-        HK_LOGD("Cant notify, because no connection was established.");
+        HK_LOGD("Cant notify, because no subscriptions were established.");
         return;
     }
 
@@ -104,18 +106,22 @@ void hk_characteristics_notify(void *characteristic_ptr)
     cJSON_AddItemToObject(j_root, "characteristics", j_characteristics);
 
     char *serialized = cJSON_PrintUnformatted(j_root);
-    hk_mem_append_string(session->response->content, (const char *)serialized);
-    free(serialized);
     cJSON_Delete(j_root);
 
-    hk_html_append_response_start(session, HK_HTML_PROT_EVENT, HK_HTML_200);
-    hk_html_append_header(session, "Content-Type", HK_HTML_CONTENT_JSON);
-    HK_LOGD("%d - Sending change notification.", session->socket);
+    hk_ll_foreach(session_list, current_session)
+    {
+        hk_session_t *session = *current_session;
+        hk_mem_append_string(session->response->content, (const char *)serialized);
+        hk_html_append_response_start(session, HK_HTML_PROT_EVENT, HK_HTML_200);
+        hk_html_append_header(session, "Content-Type", HK_HTML_CONTENT_JSON);
+        HK_LOGD("%d - Sending change notification.", session->socket);
+        hk_html_response_send(session);
+    }
 
-    hk_html_response_send(session);
+    free(serialized);
 }
 
-esp_err_t hk_characteristics_notify_after_subscription(hk_session_t *session, cJSON *j_root) 
+esp_err_t hk_characteristics_notify_after_subscription(hk_session_t *session, cJSON *j_root)
 {
     esp_err_t ret = ESP_OK;
 
@@ -262,6 +268,7 @@ void hk_characteristics_write(hk_session_t *session, cJSON *j_characteristic)
             HK_LOGD("%d - Writing characteristic %d.%d.", session->socket, aid, iid);
             characteristic->write(value);
             hk_html_response_send_empty(session, HK_HTML_204);
+            hk_characteristics_notify(characteristic);
         }
     }
 
@@ -287,7 +294,7 @@ void hk_characteristic_subscribe(hk_session_t *session, cJSON *j_root, cJSON *j_
         return;
     }
 
-    characteristic->session = session;
+    hk_subscription_store_add_session(characteristic, session);
 
     hk_html_response_send_empty(session, HK_HTML_204);
 
@@ -296,6 +303,7 @@ void hk_characteristic_subscribe(hk_session_t *session, cJSON *j_root, cJSON *j_
 
 void hk_characteristics_put(hk_session_t *session)
 {
+    HK_LOGD("%d - hk_characteristics_put: %s", session->socket, (const char *)session->request->content->ptr);
     session->response->content_type = HK_SESSION_CONTENT_JSON;
 
     cJSON *j_root = cJSON_Parse((const char *)session->request->content->ptr);
@@ -310,6 +318,10 @@ void hk_characteristics_put(hk_session_t *session)
         cJSON *j_characteristics = cJSON_GetObjectItem(j_root, "characteristics");
         for (int i = 0; i < cJSON_GetArraySize(j_characteristics) && session->response->result == HK_RES_OK; i++)
         {
+            char *serialized = cJSON_PrintUnformatted(j_characteristics);
+            HK_LOGD("%d - Checking: %s", session->socket,serialized);
+            free(serialized);
+
             cJSON *j_characteristic = cJSON_GetArrayItem(j_characteristics, i);
             if (j_characteristic == NULL)
             {

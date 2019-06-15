@@ -16,7 +16,6 @@ typedef struct
     void *(*read)();
     void (*write)(void *);
     bool can_notify;
-    hk_session_t *session;
 } hk_characteristic_t;
 
 typedef struct

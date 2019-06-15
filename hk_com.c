@@ -3,7 +3,7 @@
 #include "utils/hk_ll.h"
 #include "utils/hk_logging.h"
 #include "utils/hk_math.h"
-#include "utils/hk_heap.h"
+#include "hk_subscription_store.h"
 
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
@@ -219,6 +219,7 @@ void hk_com_task(void *args_ptr)
                 FD_CLR(connection->socket, &current_fds); // clear socket in buffer
                 lwip_close(connection->socket);
                 hk_session_free(connection);
+                hk_subscription_store_remove_session(connection);
                 hk_session_t *next = hk_ll_next(connection);
                 connections = hk_ll_remove(connections, connection);
                 connection_count--;
