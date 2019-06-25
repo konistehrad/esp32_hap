@@ -66,6 +66,26 @@ void hk_subscription_store_add_session(hk_characteristic_t *characteristic, hk_s
     *subscription->sessions = session;
 }
 
+void hk_subscription_store_remove_session_from_subscription(hk_characteristic_t *characteristic, hk_session_t *session)
+{
+    hk_subscription_t *subscription = hk_subscription_store_get_subscription(characteristic);
+
+    if (subscription != NULL)
+    {
+        hk_ll_foreach(subscription->sessions, current_session)
+        {
+            if (*current_session == session)
+            {
+                HK_LOGD("Removing session %x from subscription list of %x.", (uint)session, (uint)characteristic);
+                hk_ll_remove(subscription->sessions, current_session);
+                return;
+            }
+        }
+    }
+
+    HK_LOGD("Did not find session %x in subscription list of %x.", (uint)session, (uint)characteristic);
+}
+
 void hk_subscription_store_remove_session(hk_session_t *session)
 {
     hk_ll_foreach(subscriptions, current_subscription)
