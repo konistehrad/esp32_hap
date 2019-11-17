@@ -29,8 +29,7 @@ esp_err_t hk_com_send_data(hk_session_t *connection, hk_mem *data_to_send)
     return ESP_OK;
 }
 
-esp_err_t hk_com_open_connection(hk_session_t **connections, int listen_socket,
-                                 fd_set *active_fds)
+esp_err_t hk_com_open_connection(hk_session_t **connections, int listen_socket, fd_set *active_fds)
 {
     // accespt and get new socket file descriptor
     int socket = accept(listen_socket, (struct sockaddr *)NULL, (socklen_t *)NULL);
@@ -202,10 +201,11 @@ void hk_com_close_connections(hk_session_t **connections, fd_set *active_fds)
             hk_subscription_store_remove_session(connection);
 
             FD_CLR(connection->socket, active_fds);
-            lwip_close(connection->socket);
+            HK_LOGD("Closing socket %d", connection->socket);
+            lwip_close_r(connection->socket);
 
             hk_session_dispose(connection);
-            
+
             hk_session_t *next = hk_ll_next(connection);
             *connections = hk_ll_remove(*connections, connection);
             connection = next;
