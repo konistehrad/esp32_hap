@@ -2,6 +2,7 @@
 
 #include "utils/hk_ll.h"
 #include "utils/hk_logging.h"
+#include "utils/hk_logging_lwip.h"
 #include "utils/hk_math.h"
 #include "hk_subscription_store.h"
 
@@ -28,14 +29,18 @@ esp_err_t hk_com_send_data(hk_session_t *connection, hk_mem *data_to_send)
     return ESP_OK;
 }
 
-esp_err_t hk_com_open_connection(hk_session_t **connections, int listen_socket)
+esp_err_t hk_com_open_connection(hk_session_t **connections, int listen_socket,
+                                 fd_set *active_fds)
 {
     // accespt and get new socket file descriptor
     int socket = accept(listen_socket, (struct sockaddr *)NULL, (socklen_t *)NULL);
+
     if (socket < 0)
     {
         // happens sometimes, after removing device
         HK_LOGD("Could not accept new connection: %d", socket);
+        hk_log_lwip_err(0, "Error accepting");
+
         return ESP_FAIL;
     }
 
@@ -55,12 +60,15 @@ esp_err_t hk_com_open_connection(hk_session_t **connections, int listen_socket)
     setsockopt(socket, IPPROTO_TCP, TCP_KEEPCNT, &maxpkt, sizeof(maxpkt));
 
     *connections = hk_ll_new(*connections);
-    hk_session_init(*connections, socket);
+    hk_session_t *connection = *connections;
+    hk_session_init(connection, socket);
+
+    FD_SET(connection->socket, active_fds);
 
     return ESP_OK;
 }
 
-void hk_com_handle_connection(hk_session_t *connection, esp_err_t (*receiver)(hk_session_t *connection, hk_mem *data))
+void hk_com_handle_receive(hk_session_t *connection, esp_err_t (*receiver)(hk_session_t *connection, hk_mem *data))
 {
     int buffer_size = 1050; // use a value bigger than max package size specified by hap
     char buffer[buffer_size];
@@ -73,14 +81,16 @@ void hk_com_handle_connection(hk_session_t *connection, esp_err_t (*receiver)(hk
     else if (recv_size < 0)
     {
         connection->should_close = true;
-        HK_LOGE("%d - Error receiving data: %d", connection->socket, recv_size);
+        hk_log_lwip_err(connection->socket, "Error receiving data");
     }
     else if (recv_size == 0)
     {
         connection->should_close = true;
+        HK_LOGD("%d - Mark connection to be closed.", connection->socket);
     }
     else
     {
+        HK_LOGD("%d - Received %d bytes", connection->socket, recv_size);
         hk_mem *data = hk_mem_create();
         hk_mem_append_buffer(data, buffer, recv_size);
         if (receiver(connection, data) != ESP_OK)
@@ -119,18 +129,92 @@ esp_err_t hk_com_start_listening(int *listen_socket, int port)
 
     if (lwip_bind(socket, (struct sockaddr *)&server_address, sizeof(server_address)) < 0)
     {
+        HK_LOGE("Could not bind to socket.");
         lwip_close(socket);
         return ESP_FAIL;
     };
 
     if (lwip_listen(socket, 10) != 0)
     {
+        HK_LOGE("Could not start listening to socket.");
         lwip_close(socket);
         return ESP_FAIL;
     }
 
     *listen_socket = socket;
+
+    HK_LOGD("Listening to socket: %d", socket);
     return ESP_OK;
+}
+
+void hk_com_sending_data(hk_session_t *connections)
+{
+    for (hk_session_t *connection = connections; connection != NULL; connection = hk_ll_next(connection))
+    {
+        hk_com_handle_send_data(connection);
+    }
+}
+
+void hk_com_receiving_data(hk_session_t *connections, fd_set *read_fds, esp_err_t (*receiver)(hk_session_t *connection, hk_mem *data))
+{
+    // iterate through connections to receive data.
+    for (hk_session_t *connection = connections; connection != NULL; connection = hk_ll_next(connection))
+    {
+        if (FD_ISSET(connection->socket, read_fds))
+        {
+            hk_com_handle_receive(connection, receiver);
+        }
+    }
+}
+
+void hk_com_mark_connections_to_be_closed(hk_session_t *connections)
+{
+    // Iterate over all connections to find one, that has to be killed. If found,
+    // mark all connections to the same device as to be closed
+    for (hk_session_t *c1 = connections; c1; c1 = hk_ll_next(c1))
+    {
+        if (c1->device_id != NULL)
+        {
+            if (c1->kill)
+            {
+                for (hk_session_t *c2 = connections; c2; c2 = hk_ll_next(c2))
+                {
+                    if (c2->device_id != NULL && c1->socket != c2->socket)
+                    {
+                        if (strcmp(c2->device_id, c1->device_id) == 0)
+                        {
+                            c2->should_close = true;
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+void hk_com_close_connections(hk_session_t **connections, fd_set *active_fds)
+{
+    for (hk_session_t *connection = *connections; connection != NULL;)
+    {
+        if (connection->should_close)
+        {
+            HK_LOGD("%d - Closing connection.", connection->socket);
+            hk_subscription_store_remove_session(connection);
+
+            FD_CLR(connection->socket, active_fds);
+            lwip_close(connection->socket);
+
+            hk_session_dispose(connection);
+            
+            hk_session_t *next = hk_ll_next(connection);
+            *connections = hk_ll_remove(*connections, connection);
+            connection = next;
+        }
+        else
+        {
+            connection = hk_ll_next(connection);
+        }
+    }
 }
 
 void hk_com_task(void *args_ptr)
@@ -138,24 +222,29 @@ void hk_com_task(void *args_ptr)
     hk_com_arguments_t *args = (hk_com_arguments_t *)args_ptr;
 
     int listen_socket = 0;
-    hk_com_start_listening(&listen_socket, args->port);
+    esp_err_t err = hk_com_start_listening(&listen_socket, args->port);
+    if (err != ESP_OK)
+    {
+        return;
+    }
 
-    fd_set current_fds;
-    FD_SET(listen_socket, &current_fds);
+    fd_set active_fds, read_fds;
+    FD_ZERO(&active_fds);
+    FD_SET(listen_socket, &active_fds);
     int highest_socket = listen_socket;
     int connection_count = 0;
     hk_session_t *connections = NULL;
 
     for (;;)
     {
-        fd_set read_fds;
-        memcpy(&read_fds, &current_fds, sizeof(read_fds));
+        read_fds = active_fds;
 
-        struct timeval timeout = {1, 0}; /* 1 second timeout */
-        int triggered_nfds = select(highest_socket + 1, &read_fds, NULL, NULL, &timeout);
-        if (triggered_nfds > 0) // more than zero sockets have data
+        struct timeval timeout = {1, 0}; // 1 second timeout
+        int triggered_fds = select(highest_socket + 1, &read_fds, NULL, NULL, &timeout);
+        if (triggered_fds > 0) // more than zero sockets have data
         {
-            if (FD_ISSET(listen_socket, &read_fds)) // check if listener socket has data
+            // check if listener socket has data and if so, create new connection
+            if (FD_ISSET(listen_socket, &read_fds))
             {
                 if (connection_count >= 15)
                 {
@@ -163,73 +252,21 @@ void hk_com_task(void *args_ptr)
                 }
                 else
                 {
-                    esp_err_t res = hk_com_open_connection(&connections, listen_socket);
+                    esp_err_t res = hk_com_open_connection(&connections, listen_socket, &active_fds);
                     if (res == ESP_OK)
                     {
-                        connection_count++;
                         highest_socket = MAX(highest_socket, connections->socket);
-                        FD_SET(connections->socket, &current_fds); // set new socket to buffer
                         HK_LOGD("%d - Opened connection.", connections->socket);
                     }
                 }
-
-                triggered_nfds--;
             }
 
-            // iterate through connections to receive data.
-            for (hk_session_t *connection = connections; connection && triggered_nfds > 0; connection = hk_ll_next(connection))
-            {
-                if (FD_ISSET(connection->socket, &read_fds))
-                {
-                    hk_com_handle_connection(connection, args->receiver);
-                    triggered_nfds--;
-                }
-            }
+            hk_com_receiving_data(connections, &read_fds, args->receiver);
         }
 
-        // Iterate over all connections to find one, that has to be killed
-        for (hk_session_t *c1 = connections; c1; c1 = hk_ll_next(c1))
-        {
-            if (c1->device_id != NULL)
-            {
-                if (c1->kill)
-                {
-                    // if we find a connection to be killed, mark all connections with same device id to be closed
-                    for (hk_session_t *c2 = connections; c2; c2 = hk_ll_next(c2))
-                    {
-                        if (c2->device_id != NULL && c1->socket != c2->socket)
-                        {
-                            if (strcmp(c2->device_id, c1->device_id) == 0)
-                            {
-                                c2->should_close = true;
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        for (hk_session_t *connection = connections; connection != NULL;)
-        {
-            hk_com_handle_send_data(connection);
-
-            if (connection->should_close)
-            {
-                HK_LOGD("%d - Closing connection.", connection->socket);
-                FD_CLR(connection->socket, &current_fds); // clear socket in buffer
-                lwip_close(connection->socket);
-                hk_session_free(connection);
-                hk_subscription_store_remove_session(connection);
-                hk_session_t *next = hk_ll_next(connection);
-                connections = hk_ll_remove(connections, connection);
-                connection_count--;
-                connection = next;
-            }
-            else
-            {
-                connection = hk_ll_next(connection);
-            }
-        }
+        hk_com_sending_data(connections);
+        hk_com_mark_connections_to_be_closed(connections);
+        hk_com_close_connections(&connections, &active_fds);
     }
 }
 

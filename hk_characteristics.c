@@ -266,8 +266,9 @@ void hk_characteristic_unsubscribe(hk_session_t *session, cJSON *j_characteristi
     cJSON *j_iid = cJSON_GetObjectItem(j_characteristic, "iid");
     int iid = j_iid->valueint;
 
-    HK_LOGD("%d - Subscription request for characteristic %d.%d.", session->socket, aid, iid);
     hk_characteristic_t *characteristic = hk_accessories_store_get_characteristic(aid, iid);
+    HK_LOGD("%d - Request for removing subscription for characteristic %d.%d (%x).", 
+        session->socket, aid, iid, (uint)characteristic);
     if (characteristic == NULL)
     {
         HK_LOGE("Could not find characteristic %d.%d.", aid, iid);
@@ -283,7 +284,7 @@ void hk_characteristics_put(hk_session_t *session)
 {
     HK_LOGD("%d - hk_characteristics_put: %s", session->socket, (const char *)session->request->content->ptr);
     session->response->content_type = HK_SESSION_CONTENT_JSON;
-
+    
     cJSON *j_root = cJSON_Parse((const char *)session->request->content->ptr);
     if (j_root == NULL)
     {

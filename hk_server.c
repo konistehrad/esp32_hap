@@ -21,7 +21,7 @@
 
 void hk_server_handle(hk_session_t *session)
 {
-    //HK_LOGD("%d - Handling %s, %d", session->socket, session->request->url->ptr, session->request->method);
+    HK_LOGD("%d - Handling %s, %d", session->socket, session->request->url->ptr, session->request->method);
 
     if (hk_mem_cmp_str(session->request->url, "/pair-setup") && HK_SESSION_HTML_METHOD_POST == session->request->method)
     {

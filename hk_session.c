@@ -48,7 +48,7 @@ void hk_session_clean(hk_session_t *session)
     hk_session_clean_response(session);
 }
 
-void hk_session_free(hk_session_t *session)
+void hk_session_dispose(hk_session_t *session)
 {
     hk_mem_free(session->request->url);
     hk_mem_free(session->request->query);

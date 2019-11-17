@@ -85,6 +85,6 @@ void hk_mdns_update_paired(bool initial)
         //   bits 3-7 - reserved
         hk_mdns_add_txt("sf", "1");
     }else{
-        HK_LOGD("Not advertising for pairing, because we are coupled already.");
+        HK_LOGI("Not advertising for pairing, because we are coupled already.");
     }
 }

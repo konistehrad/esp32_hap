@@ -61,7 +61,8 @@ void hk_subscription_store_add_session(hk_characteristic_t *characteristic, hk_s
         }
     }
 
-    HK_LOGD("Adding session %x to subscription list of %x.", (uint)session, (uint)characteristic);
+    HK_LOGD("Adding session %d (%x) to subscription list of %x.", 
+        session->socket, (uint)session, (uint)characteristic);
     subscription->sessions = hk_ll_new(subscription->sessions);
     *subscription->sessions = session;
 }
@@ -76,23 +77,28 @@ void hk_subscription_store_remove_session_from_subscription(hk_characteristic_t 
         {
             if (*current_session == session)
             {
-                HK_LOGD("Removing session %x from subscription list of %x.", (uint)session, (uint)characteristic);
-                hk_ll_remove(subscription->sessions, current_session);
+                HK_LOGD("Removing session %d from subscription list of %x.", 
+                    session->socket, (uint)characteristic);
+                subscription->sessions = hk_ll_remove(subscription->sessions, current_session);
                 return;
             }
         }
     }
 
-    HK_LOGD("Did not find session %x in subscription list of %x.", (uint)session, (uint)characteristic);
+    HK_LOGD("Could not remove subscription of session %d in subscription list of %x. It was not found.", 
+        session->socket, (uint)characteristic);
 }
 
 void hk_subscription_store_remove_session(hk_session_t *session)
 {
+    HK_LOGD("Removing all subscriptions for session %d.", session->socket);
+
     hk_ll_foreach(subscriptions, current_subscription)
     {
         for (hk_session_t **current_session = current_subscription->sessions; current_session != NULL;)
-        {
-            if (*current_session == session)
+        {   
+            hk_session_t *current_session_ptr = *current_session;
+            if (current_session_ptr == session)
             {
                 hk_session_t **next = hk_ll_next(current_session);
                 current_subscription->sessions = hk_ll_remove(current_subscription->sessions, current_session);
