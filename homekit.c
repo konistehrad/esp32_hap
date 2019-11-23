@@ -55,7 +55,6 @@ void hk_setup_finish()
 
     hk_mem *accessories_string = hk_mem_create();
     hk_accessories_serializer_accessories(accessories_string);
-    hk_mem_log("Accessories", accessories_string);
     hk_mem_free(accessories_string);
 }
 

@@ -13,17 +13,16 @@ cJSON *hk_accessories_serializer_format_value(hk_format_t format, void *value)
     switch (format)
     {
     case HK_FORMAT_BOOL:
-        return cJSON_CreateBool(*(int*)value);
+    {
+        return cJSON_CreateBool(*(bool *)value);
+    }
     case HK_FORMAT_UINT8:
     case HK_FORMAT_UINT32:
     case HK_FORMAT_UINT64:
     case HK_FORMAT_INT:
-        return cJSON_CreateNumber(*(int*)value);
+        return cJSON_CreateNumber(*(int *)value);
     case HK_FORMAT_FLOAT:
-    {
-        int value_double = *(double*)value;
-        return cJSON_CreateNumber(value_double);
-    }
+        return cJSON_CreateNumber(*(double *)value);
     case HK_FORMAT_STRING:
         return cJSON_CreateString((char *)value);
     case HK_FORMAT_TLV8:
@@ -44,6 +43,7 @@ void hk_accessories_serializer_value(hk_characteristic_t *characteristic, cJSON 
     if (characteristic->read != NULL)
     {
         void *value = characteristic->read();
+        HK_LOGD("Got value for serialization: %x", (uint)value);
         cJSON_AddItemToObject(j_characteristic, "value", hk_accessories_serializer_format_value(format, value));
     }
     else if (characteristic->static_value != NULL)
