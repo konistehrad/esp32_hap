@@ -31,8 +31,10 @@ esp_err_t hk_com_send_data(hk_session_t *connection, hk_mem *data_to_send)
 
 esp_err_t hk_com_open_connection(hk_session_t **connections, int listen_socket, fd_set *active_fds)
 {
+    struct sockaddr_in remote_addr;
+    int len = sizeof(remote_addr);
     // accespt and get new socket file descriptor
-    int socket = accept(listen_socket, (struct sockaddr *)NULL, (socklen_t *)NULL);
+    int socket = accept(listen_socket, (struct sockaddr *)&remote_addr, (socklen_t *)&len);
 
     if (socket < 0)
     {
@@ -64,6 +66,7 @@ esp_err_t hk_com_open_connection(hk_session_t **connections, int listen_socket, 
 
     FD_SET(connection->socket, active_fds);
 
+    HK_LOGD("%d - Opened connection from '%s'.", socket, inet_ntoa(remote_addr.sin_addr.s_addr));
     return ESP_OK;
 }
 
@@ -256,7 +259,6 @@ void hk_com_task(void *args_ptr)
                     if (res == ESP_OK)
                     {
                         highest_socket = MAX(highest_socket, connections->socket);
-                        HK_LOGD("%d - Opened connection.", connections->socket);
                     }
                 }
             }
