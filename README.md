@@ -1,35 +1,13 @@
 # esp32-homekit
 ESP-32 implementation of Apple Homekit Accessory Protocol(HAP)
 
-## Installation
-1. Setup esp-idf development environment: https://docs.espressif.com/projects/esp-idf/en/latest/get-started/
-3. Install wolfssl
-3.1. Clone wolfssl: https://github.com/wolfSSL/wolfssl
-3.2. Install wolfssl into esp-idf:https://github.com/wolfSSL/wolfssl/blob/master/IDE/Espressif/ESP-IDF/README.md
-3.2.1. Open terminal with esp env vars set
-3.2.2. Execute setup.sh from <path to wolfssl>/IDE/Espressif/ESP-IDF
-3.3: Adapt user_settings.h in <path to esp idf>/components/wolfssl/include/user_settings.h by appending the following lines:
-/#include <esp_system.h>
-static inline int hwrand_generate_block(uint8_t *buf, size_t len) {
-    int i;
-    for (i=0; i+4 < len; i+=4) {
-        *((uint32_t*)buf) = esp_random();
-        buf += 4;
-    }
-    if (i < len) {
-        uint32_t r = esp_random();
-        while (i < len) {
-            *buf++ = r;
-            r >>= 8;
-            i++;
-        }
-    }
-
-    return 0;
-}
-/#define CUSTOM_RAND_GENERATE_BLOCK hwrand_generate_block
-4. clone esp32-homekit into esp-idf/components: git clone https://github.com/slompf18/esp32-homekit.git 
-5. Create an application and init it
+## Usage
+To use the component on macos/linux, do the following:
+1. Setup Espressif development environment. This project is tested with ESP-IDF version 4.1: https://docs.espressif.com/projects/esp-idf/en/latest/get-started/index.html#
+1. Create your application
+1. Install submodules
+    git submodule add https://github.com/slompf18/esp32_hap_wolfssl.git components/esp32_hap_wolfssl
+    git submodule add https://github.com/slompf18/esp32-homekit.git components/esp32-homekit
 
 ## Unit testing
 1. Setup unit test app: https://docs.espressif.com/projects/esp-idf/en/latest/api-guides/unit-tests.html
@@ -39,6 +17,9 @@ static inline int hwrand_generate_block(uint8_t *buf, size_t len) {
 2. Compile and start unit test app: make flash monitor TEST_COMPONENTS='esp32-homekit'
 
 ## Debugging
+### Set log level
+In order to get more (or less) verbosity, change the following line in CMakeLists.txt: set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DLOG_LOCAL_LEVEL=ESP_LOG_DEBUG")
+
 ### How to WireShark the IOs Device
 1. Connect device by USB
 2. Get your UDID: http://whatsmyudid.com/

@@ -28,8 +28,6 @@ void hk_mdns_add_txt(const char *key, const char *format, ...)
 
 void hk_mdns_init(const char *name, hk_categories_t category, size_t config_version)
 {
-    HK_LOGD("Initializing: %s", name);
-
     //Free in case of reconnecting to wifi
     mdns_free(); 
 

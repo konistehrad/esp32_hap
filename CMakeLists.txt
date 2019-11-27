@@ -1,6 +1,5 @@
-set(COMPONENT_SRCDIRS ".")
-set(COMPONENT_ADD_INCLUDEDIRS "include")
-
-set(COMPONENT_REQUIRES wolfssl)
-
+set(COMPONENT_SRCDIRS . utils crypto)
+set(COMPONENT_ADD_INCLUDEDIRS include)
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DLOG_LOCAL_LEVEL=ESP_LOG_DEBUG")
+set(COMPONENT_REQUIRES json nghttp esp_http_server mdns nvs_flash esp32_hap_wolfssl)
 register_component()

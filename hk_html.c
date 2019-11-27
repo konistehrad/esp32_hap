@@ -5,6 +5,8 @@
 
 esp_err_t hk_html_send(hk_session_t *session)
 {
+    //hk_mem_log("Sending response with content", session->response->data);
+
     esp_err_t ret = hk_encryption_postprocessor(session, session->response->data);
 
     hk_session_clean_response(session);

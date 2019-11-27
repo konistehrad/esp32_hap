@@ -15,7 +15,7 @@ void _hk_list_append(void *list, size_t size)
     if (!item)
     {
         HK_LOGE("List: Error allocating memory for list.");
-        return NULL;
+        return;
     }
 
     ((hk_list_t*)list)->next = item;

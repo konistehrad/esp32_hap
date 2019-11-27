@@ -202,7 +202,7 @@ void hk_com_close_connections(hk_session_t **connections, fd_set *active_fds)
 
             FD_CLR(connection->socket, active_fds);
             HK_LOGD("Closing socket %d", connection->socket);
-            lwip_close_r(connection->socket);
+            close(connection->socket);
 
             hk_session_dispose(connection);
 

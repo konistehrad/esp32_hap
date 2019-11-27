@@ -1,5 +1,5 @@
-#include "include/homekit.h"
 #include "utils/hk_logging.h"
+#include "include/homekit.h"
 #include "utils/hk_store.h"
 #include "hk_server.h"
 #include "hk_mdns.h"
@@ -8,21 +8,19 @@
 #include "hk_characteristics.h"
 #include "hk_pairings_store.h"
 
-void hk_init(const char *name, hk_categories_t category, const char *code, esp_log_level_t log_level)
+void hk_init()
 {
-    esp_log_level_set("homekit", log_level);
-
-    hk_store_init();
-    hk_mdns_init(name, category, 2);
     hk_server_start();
 
-    hk_store_code_set(code);
-    ESP_LOGI("homekit", "Inititialized.");
-    hk_pairings_log_devices();
+    ESP_LOGD("homekit", "Inititialized.");
 }
 
-void hk_setup_start()
+void hk_setup_start(const char *name, hk_categories_t category, const char *code)
 {
+    hk_store_init();
+    hk_store_code_set(code);
+    hk_pairings_log_devices();
+    hk_mdns_init(name, category, 2);
 }
 
 void hk_setup_add_accessory(const char *name, const char *manufacturer, const char *model, const char *serial_number, const char *revision, void (*identify)())
@@ -51,7 +49,7 @@ void *hk_setup_add_characteristic(hk_characteristic_types_t type, void *(*read)(
 void hk_setup_finish()
 {
     hk_accessories_store_end_config();
-    ESP_LOGI("homekit", "Set up.");
+    ESP_LOGD("homekit", "Set up.");
 
     hk_mem *accessories_string = hk_mem_create();
     hk_accessories_serializer_accessories(accessories_string);

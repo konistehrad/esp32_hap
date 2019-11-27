@@ -13,9 +13,7 @@ cJSON *hk_accessories_serializer_format_value(hk_format_t format, void *value)
     switch (format)
     {
     case HK_FORMAT_BOOL:
-    {
         return cJSON_CreateBool(*(bool *)value);
-    }
     case HK_FORMAT_UINT8:
     case HK_FORMAT_UINT32:
     case HK_FORMAT_UINT64:
@@ -43,7 +41,6 @@ void hk_accessories_serializer_value(hk_characteristic_t *characteristic, cJSON 
     if (characteristic->read != NULL)
     {
         void *value = characteristic->read();
-        HK_LOGD("Got value for serialization: %x", (uint)value);
         cJSON_AddItemToObject(j_characteristic, "value", hk_accessories_serializer_format_value(format, value));
     }
     else if (characteristic->static_value != NULL)

@@ -35,6 +35,7 @@ void *hk_accessories_store_add_characteristic(hk_characteristic_types_t type, vo
     characteristic->static_value = NULL;
     characteristic->read = read;
     characteristic->write = write;
+    characteristic->can_notify = can_notify;
 
     hk_accessories->services->characteristics = characteristic;
 

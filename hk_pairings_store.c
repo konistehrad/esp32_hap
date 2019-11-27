@@ -124,7 +124,7 @@ esp_err_t hk_pairings_store_ltpk_get(hk_mem *device_id, hk_mem *device_ltpk)
     if (ret != HK_RES_OK)
     {
         char* id_str =  hk_mem_get_str(device_id);
-        //HK_LOGE("A long term public key was not found for device id %s", id_str);
+        HK_LOGE("A long term public key was not found for device id %s", id_str);
         free(id_str);
     }
 
@@ -255,10 +255,11 @@ void hk_pairings_log_devices()
     cJSON *j_pairings = hk_pairings_store_get_j_parings_array(j_root);
     cJSON *j_pairing = j_pairings->child;
 
+    HK_LOGD("We are coupled with the following devices:");
     while (j_pairing)
     {
         cJSON *j_device_id = cJSON_GetObjectItem(j_pairing, HK_PAIRINGS_STORE_DEVICE_ID);
-        HK_LOGD("Coupled with device '%s'.", j_device_id->valuestring);
+        HK_LOGD("   %s", j_device_id->valuestring);
 
         j_pairing = j_pairing->next;
     }

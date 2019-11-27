@@ -53,6 +53,7 @@ esp_err_t hk_pair_verify_start(hk_session_t *session, hk_tlv_t *tlv)
     }
     else
     {
+        HK_LOGE("Cannot get key from store for pairing.");
         ret = HK_RES_UNKNOWN;
     }
 
@@ -156,28 +157,35 @@ esp_err_t hk_pair_verify_finish(hk_session_t *session, hk_tlv_t *tlv)
     esp_err_t ret = hk_tlv_get_mem_by_type(tlv, HK_TLV_EncryptedData, encrypted_data);
 
     if (!ret)
+    {
+        HK_LOGV("Decrypting pairing request.");
         hk_chacha20poly1305_decrypt(session->session_key, HK_CHACHA_VERIFY_MSG3, encrypted_data, decrypted_data);
-    tlv_data_decrypted = hk_tlv_deserialize(decrypted_data);
-    ret = hk_tlv_get_mem_by_type(tlv_data_decrypted, HK_TLV_Identifier, device_id);
+        tlv_data_decrypted = hk_tlv_deserialize(decrypted_data);
+        ret = hk_tlv_get_mem_by_type(tlv_data_decrypted, HK_TLV_Identifier, device_id);
+    }
 
     if (!ret)
     {
+        HK_LOGV("Getting session id.");
         hk_session_set_device_id(session, device_id);
         ret = hk_tlv_get_mem_by_type(tlv_data_decrypted, HK_TLV_Signature, device_signature);
     }
 
     if (!ret)
     {
+        HK_LOGV("Getting long term public key.");
         ret = hk_pairings_store_ltpk_get(device_id, device_public_key);
     }
 
     if (!ret)
     {
+        HK_LOGV("Generating key.");
         ret = hk_ed25519_generate_key_from_public_key(device_key, device_public_key);
     }
 
     if (!ret)
     {
+        HK_LOGV("Verifying key.");
         hk_mem_append(device_info, session->device_curve_public_key);
         hk_mem_append(device_info, device_id);
         hk_mem_append(device_info, session->accessory_curve_public_key);
@@ -190,8 +198,10 @@ esp_err_t hk_pair_verify_finish(hk_session_t *session, hk_tlv_t *tlv)
         tlv_data = hk_tlv_add_error(tlv_data, HK_TLV_ERROR_Authentication);
     }
 
+    HK_LOGV("Serializing answer.");
     hk_tlv_serialize(tlv_data, session->response->content);
 
+    HK_LOGV("Done.");
     hk_ed25519_free_key(device_key);
     hk_tlv_free(tlv_data);
     hk_tlv_free(tlv_data_decrypted);

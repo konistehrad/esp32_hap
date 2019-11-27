@@ -56,7 +56,7 @@ hk_srp_key_t *hk_srp_init_key()
 void hk_random_fill(uint8_t *data, size_t size)
 {
     uint16_t x = esp_random();
-    memcpy(data, &x, 16);
+    memcpy(data, &x, sizeof(uint8_t));
 }
 
 size_t hk_srp_generate_key(hk_srp_key_t *key, const char *username, const char *password)
