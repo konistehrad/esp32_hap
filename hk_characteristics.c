@@ -282,7 +282,6 @@ void hk_characteristic_unsubscribe(hk_session_t *session, cJSON *j_characteristi
 
 void hk_characteristics_put(hk_session_t *session)
 {
-    HK_LOGD("%d - hk_characteristics_put: %s", session->socket, (const char *)session->request->content->ptr);
     session->response->content_type = HK_SESSION_CONTENT_JSON;
     
     cJSON *j_root = cJSON_Parse((const char *)session->request->content->ptr);

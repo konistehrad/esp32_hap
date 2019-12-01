@@ -6,7 +6,7 @@
 #include <string.h>
 
 #define __FILENAME__ (strstr(__FILE__, "/hk_") ? strstr(__FILE__, "/hk_") + 1 : __FILE__) // write reverse strstr and use / instead of /hk_
-#define TAG  "homekit"
+#define TAG  "hap"
 #define HK_LOGV(message, ...) ESP_LOGV(TAG, "%s(%d)-> " message, __FILENAME__, __LINE__, ##__VA_ARGS__) 
 #define HK_LOGD(message, ...) ESP_LOGD(TAG, "%s(%d)-> " message, __FILENAME__, __LINE__, ##__VA_ARGS__) 
 #define HK_LOGI(message, ...) ESP_LOGI(TAG, "%s(%d)-> " message, __FILENAME__, __LINE__, ##__VA_ARGS__) 

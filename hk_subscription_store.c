@@ -44,7 +44,6 @@ void hk_subscription_store_add_session(hk_characteristic_t *characteristic, hk_s
 
     if (subscription == NULL)
     {
-        HK_LOGD("No subscriptions found for characteristic, creating new list.");
         subscription = subscriptions = hk_ll_new(subscriptions);
         subscription->characteristic = characteristic;
         subscription->sessions = NULL;
@@ -55,7 +54,7 @@ void hk_subscription_store_add_session(hk_characteristic_t *characteristic, hk_s
         {
             if (*current_session == session)
             {
-                HK_LOGD("Subscription exists, doing nothing.");
+                // Subscription exists, doing nothing.
                 return;
             }
         }

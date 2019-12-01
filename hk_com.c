@@ -88,11 +88,11 @@ void hk_com_handle_receive(hk_session_t *connection, esp_err_t (*receiver)(hk_se
     else if (recv_size == 0)
     {
         connection->should_close = true;
-        HK_LOGD("%d - Mark connection to be closed.", connection->socket);
+        HK_LOGV("%d - Mark connection to be closed.", connection->socket);
     }
     else
     {
-        HK_LOGD("%d - Received %d bytes", connection->socket, recv_size);
+        HK_LOGV("%d - Received %d bytes", connection->socket, recv_size);
         hk_mem *data = hk_mem_create();
         hk_mem_append_buffer(data, buffer, recv_size);
         if (receiver(connection, data) != ESP_OK)
@@ -127,7 +127,6 @@ esp_err_t hk_com_start_listening(int *listen_socket, int port)
     server_address.sin_family = AF_INET;
     server_address.sin_addr.s_addr = htonl(INADDR_ANY);
     server_address.sin_port = htons(port);
-    HK_LOGD("Listening on port %d.", port);
 
     if (lwip_bind(socket, (struct sockaddr *)&server_address, sizeof(server_address)) < 0)
     {
@@ -145,7 +144,7 @@ esp_err_t hk_com_start_listening(int *listen_socket, int port)
 
     *listen_socket = socket;
 
-    HK_LOGD("Listening to socket: %d", socket);
+    HK_LOGD("Listening to socket %d on port %d", socket, port);
     return ESP_OK;
 }
 
