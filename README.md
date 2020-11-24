@@ -1,5 +1,7 @@
 # esp32-homekit
-ESP-32 implementation of Apple Homekit Accessory Protocol(HAP)
+ESP-32 implementation of Apple Homekit Accessory Protocol(HAP).
+
+The following guides were written and tested on MacOs.
 
 ## Usage
 To use the component on macos/linux, do the following:
@@ -9,12 +11,21 @@ To use the component on macos/linux, do the following:
     git submodule add https://github.com/slompf18/esp32_hap_wolfssl.git components/esp32_hap_wolfssl
     git submodule add https://github.com/slompf18/esp32-homekit.git components/esp32-homekit
 
+## Build and run
+1. cd to the project directory.
+2. Restore environment: . ~/esp/esp-idf/export.sh
+3. Build the project (optional): idf.py
+4. Find out the port of your device: /dev/tty* (something like /dev/tty.SLAB_USBtoUART)
+5. Flash and monitor the project to the esp: idf.py -p /dev/tty.SLAB_USBtoUART flash monitor
+6. Stop it by pressing Ctrl + ]
+
 ## Unit testing
-1. Setup unit test app: https://docs.espressif.com/projects/esp-idf/en/latest/api-guides/unit-tests.html
-2. In make menuconfig enable the following points under Component config->Heap memory debugging
-- Enable heap tracing (2)
-- Enable heap task tracking
-2. Compile and start unit test app: make flash monitor TEST_COMPONENTS='esp32-homekit'
+1. cd into the test_runner directory
+2. idf.py menuconfig
+3. choose the stack of hap
+4. enable bluetooth (nimble only)
+5. disable task watchdog
+6. build and flash the test app: idf.py -p /dev/tty.SLAB_USBtoUART flash monitor
 
 ## Debugging
 ### Set log level
