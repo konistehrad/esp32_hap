@@ -55,7 +55,7 @@ void hk_advertising_init(const char *name, hk_categories_t category, size_t conf
     free(id_str);
 
     hk_advertising_add_txt("md", "%s", name);           // model name
-    hk_advertising_add_txt("pv", "1.0");                // protocol version (required)
+    hk_advertising_add_txt("pv", "1.1");                // protocol version (required)
     hk_advertising_add_txt("c#", "%d", config_version); // current configuration number (required)
     hk_advertising_add_txt("s#", "1");                  // current state number (required)
     hk_advertising_add_txt("ff", "0");                  // see spec table 5.4 - its completely unclear what that is for.
