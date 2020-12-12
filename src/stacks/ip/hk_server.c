@@ -22,7 +22,21 @@
 
 void hk_server_handle(hk_session_t *session)
 {
-    HK_LOGD("%d - Handling %s, %d", session->socket, session->request->url->ptr, session->request->method);
+    char *content = hk_mem_to_string(session->request->content);
+    char *url = hk_mem_to_string(session->request->url);
+    char *method;
+    switch(session->request->method){
+        case  HK_SESSION_HTML_METHOD_GET: method = "GET"; break;
+        case  HK_SESSION_HTML_METHOD_POST: method = "POST"; break;
+        case  HK_SESSION_HTML_METHOD_PUT: method = "PUT"; break;
+        default: method = "UNDEFINED"; break;
+    }
+
+    HK_LOGD("%d - Handling %s: %s", session->socket, method, url);
+    HK_LOGD("Content:\n%s", content);
+
+    free(content);
+    free(url);
 
     if (hk_mem_equal_str(session->request->url, "/pair-setup") && HK_SESSION_HTML_METHOD_POST == session->request->method)
     {
@@ -59,6 +73,7 @@ void hk_server_handle(hk_session_t *session)
         hk_accessories_serializer_accessories(session->response->content);
         session->response->content_type = HK_SESSION_CONTENT_JSON;
         HK_LOGD("%d - Returning accessories.", session->socket);
+
         hk_session_send(session);
     }
     else if (hk_mem_equal_str(session->request->url, "/characteristics") && HK_SESSION_HTML_METHOD_GET == session->request->method)

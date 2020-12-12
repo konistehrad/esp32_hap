@@ -5,6 +5,10 @@
 
 esp_err_t hk_html_send(hk_session_t *session)
 {    
+    // char *data = hk_mem_to_string(session->response->data);
+    // HK_LOGD("Sending response: \n%s", data);
+    // free(data);
+
     return hk_com_send_data(session);
 }
 

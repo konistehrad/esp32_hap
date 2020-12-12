@@ -15,22 +15,19 @@
 #define HK_SESSION_CONTENT_TLV 0
 #define HK_SESSION_CONTENT_JSON 1
 
-struct hk_session;
+#define HK_SESSION_HTML_METHOD_NOT_SET 0
+#define HK_SESSION_HTML_METHOD_GET 1
+#define HK_SESSION_HTML_METHOD_POST 3
+#define HK_SESSION_HTML_METHOD_PUT 4
 
-typedef enum
-{
-    HK_SESSION_HTML_METHOD_NOT_SET = -1,
-    HK_SESSION_HTML_METHOD_GET = 1,
-    HK_SESSION_HTML_METHOD_POST = 3,
-    HK_SESSION_HTML_METHOD_PUT = 4,
-} hk_session_html_methods_t;
+struct hk_session;
 
 typedef struct
 {
     hk_mem *content;
     hk_mem *query;
     hk_mem *url;
-    hk_session_html_methods_t method;
+    uint8_t method;
 } hk_session_request_t;
 
 typedef struct

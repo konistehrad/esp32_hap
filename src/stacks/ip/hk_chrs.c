@@ -1,6 +1,7 @@
 #include "hk_chrs.h"
 
 #include "../../common/hk_chrs_properties.h"
+#include "../../common/hk_global_state.h"
 #include "../../include/hk_srvs.h"
 #include "../../include/hk_chrs.h"
 #include "../../utils/hk_logging.h"
@@ -80,6 +81,10 @@ void hk_chrs_notify(void *chr_ptr)
         return;
     }
 
+    // increase global state
+    hk_global_state_next();
+
+    // fire event
     hk_chr_t *chr = (hk_chr_t *)chr_ptr;
     hk_session_t **session_list = hk_subscription_store_get_sessions(chr);
 
@@ -290,10 +295,11 @@ void hk_chrs_put(hk_session_t *session)
 {
     session->response->content_type = HK_SESSION_CONTENT_JSON;
 
-    cJSON *j_root = cJSON_Parse((const char *)session->request->content->ptr);
+    char *content = hk_mem_to_string(session->request->content);
+    cJSON *j_root = cJSON_Parse((const char *)content);
     if (j_root == NULL)
     {
-        HK_LOGE("Failed to parse request for chrs put: %s", session->request->content->ptr);
+        HK_LOGE("Failed to parse request for chrs put.");
         session->response->result = ESP_ERR_INVALID_ARG;
     }
 
@@ -330,6 +336,7 @@ void hk_chrs_put(hk_session_t *session)
     }
 
     cJSON_Delete(j_root);
+    free(content);
 }
 
 void hk_chrs_identify(hk_session_t *session)
