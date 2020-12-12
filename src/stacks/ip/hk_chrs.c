@@ -113,7 +113,7 @@ void hk_chrs_notify(void *chr_ptr)
         hk_mem_append_string(session->response->content, (const char *)serialized);
         hk_html_append_response_start(session, HK_HTML_PROT_EVENT, HK_HTML_200);
         hk_html_append_header(session, "Content-Type", HK_HTML_CONTENT_JSON);
-        HK_LOGD("%d - Sending change notification: %s", session->socket, serialized);
+        HK_LOGD("%d - Sending change notification: %s (%x)", session->socket, serialized, (uint)session);
         hk_html_response_send(session);
     }
 

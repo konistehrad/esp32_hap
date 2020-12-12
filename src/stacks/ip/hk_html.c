@@ -30,7 +30,7 @@ esp_err_t hk_html_response_send(hk_session_t *session)
 
     hk_html_append_header(session, "Content-Length", (const char *)length_string);
     hk_mem_append_string(session->response->data, "\r\n");
-    hk_mem_append_buffer(session->response->data, session->response->content->ptr, session->response->content->size);
+    hk_mem_append(session->response->data, session->response->content);
 
     return hk_html_send(session);
 }

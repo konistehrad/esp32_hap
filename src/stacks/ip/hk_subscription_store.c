@@ -55,14 +55,13 @@ void hk_subscription_store_add_session(hk_chr_t *chr, hk_session_t *session)
         {
             if (*current_session == session)
             {
-                // Subscription exists, doing nothing.
+                HK_LOGD("Subscription exists for session %d (%x) in subscription list of %x. Doing nothing.", session->socket, (uint)session, (uint)chr);
                 return;
             }
         }
     }
 
-    HK_LOGD("Adding session %d (%x) to subscription list of %x.", 
-        session->socket, (uint)session, (uint)chr);
+    HK_LOGD("Adding session %d (%x) to subscription list of %x.", session->socket, (uint)session, (uint)chr);
     subscription->sessions = hk_ll_init(subscription->sessions);
     *subscription->sessions = session;
 }
