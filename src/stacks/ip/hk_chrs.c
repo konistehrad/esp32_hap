@@ -1,15 +1,15 @@
 #include "hk_chrs.h"
 
 #include "../../common/hk_chrs_properties.h"
-#include "../../common/hk_global_state.h"
 #include "../../include/hk_srvs.h"
 #include "../../include/hk_chrs.h"
 #include "../../utils/hk_logging.h"
 #include "../../utils/hk_ll.h"
-#include "hk_html.h"
-#include "hk_html_parser.h"
+#include "../../utils/hk_util.h"
+#include "hk_server.h"
 #include "hk_accessories_serializer.h"
 #include "hk_subscription_store.h"
+#include "hk_advertising.h"
 
 #include <cJSON.h>
 #include <stdbool.h>
@@ -27,79 +27,85 @@ char *hk_chrs_get_next_id_pair(char *ids, int *result)
     return next_ids + 1;
 }
 
-void hk_chrs_get(hk_session_t *session)
+esp_err_t hk_chrs_get(char *ids, hk_mem *response)
 {
-    hk_mem *ids = hk_mem_init();
-    session->response->content_type = HK_SESSION_CONTENT_JSON;
-    esp_err_t ret = hk_html_parser_get_query_value(session->request->query, "id", ids);
+    esp_err_t ret = ESP_OK;
 
     int results[2];
     cJSON *j_root = cJSON_CreateObject();
-    if (ret == ESP_OK)
-    {
-        cJSON *j_chrs = cJSON_CreateArray();
-        cJSON_AddItemToObject(j_root, "characteristics", j_chrs);
-        char *id_ptr = ids->ptr;
-        session->response->result = ESP_OK;
-        while (id_ptr != NULL)
-        {
-            id_ptr = hk_chrs_get_next_id_pair(id_ptr, results);
-            hk_chr_t *chr = hk_accessories_store_get_chr(results[0], results[1]);
-            if (chr == NULL)
-            {
-                HK_LOGE("Could not find chr %d.%d.", results[0], results[1]);
-                session->response->result = ESP_ERR_NOT_FOUND;
-                break;
-            }
+    cJSON *j_chrs = cJSON_CreateArray();
+    cJSON_AddItemToObject(j_root, "characteristics", j_chrs);
 
-            cJSON *j_chr = cJSON_CreateObject();
-            cJSON_AddNumberToObject(j_chr, "aid", results[0]);
-            cJSON_AddNumberToObject(j_chr, "iid", results[1]);
-            hk_accessories_serializer_value(chr, j_chr);
-            cJSON_AddItemToArray(j_chrs, j_chr);
+    while (ids != NULL)
+    {
+        ids = hk_chrs_get_next_id_pair(ids, results);
+        hk_chr_t *chr = hk_accessories_store_get_chr(results[0], results[1]);
+        if (chr == NULL)
+        {
+            HK_LOGE("Could not find chr %d.%d.", results[0], results[1]);
+            ret = ESP_ERR_NOT_FOUND;
+            break;
         }
+
+        cJSON *j_chr = cJSON_CreateObject();
+        cJSON_AddNumberToObject(j_chr, "aid", results[0]);
+        cJSON_AddNumberToObject(j_chr, "iid", results[1]);
+        hk_accessories_serializer_value(chr, j_chr);
+        cJSON_AddItemToArray(j_chrs, j_chr);
     }
 
-    if (session->response->result == ESP_OK)
+    if (ret == ESP_OK)
     {
         char *serialized = cJSON_PrintUnformatted(j_root);
-        hk_mem_append_string(session->response->content, (const char *)serialized);
+        hk_mem_append_string(response, (const char *)serialized);
         free(serialized);
     }
 
-    HK_LOGD("%d - Returning value for chr %d.%d.", session->socket, results[0], results[1]);
-    hk_session_send(session);
-    hk_mem_free(ids);
     cJSON_Delete(j_root);
+
+    return ret;
 }
 
-void hk_chrs_notify(void *chr_ptr)
+esp_err_t hk_chrs_notify(void *chr_ptr)
 {
+    esp_err_t ret = ESP_OK;
     if (!chr_ptr)
     {
         HK_LOGE("No chr was given, to notify.");
-        return;
+        return ESP_ERR_INVALID_ARG;
     }
 
     // increase global state
-    hk_global_state_next();
+    hk_advertising_global_state_next();
 
     // fire event
     hk_chr_t *chr = (hk_chr_t *)chr_ptr;
-    hk_session_t **session_list = hk_subscription_store_get_sessions(chr);
+    const uint8_t aid = chr->aid;
+    const uint8_t iid = chr->iid;
+    int *sockets = NULL;
+    size_t number_of_sockets = -1;
+    ret = hk_subscription_store_get(chr, &sockets, &number_of_sockets);
 
-    if (session_list == NULL)
+    if (ret == ESP_ERR_NOT_FOUND)
     {
-        HK_LOGD("Cant notify, because nothing is subscribed for chr %d.%d.", chr->aid, chr->iid);
-        return;
+        HK_LOGD("Cant notify, because nothing is subscribed for characteristics %d.%d.", aid, iid);
+        return ret;
+    }
+    else if (ret != ESP_OK)
+    {
+        HK_LOGE("Error getting characteristics %d.%d to notify.", aid, iid);
+        return ret;
     }
 
-    const double aid = chr->aid;
-    const double iid = chr->iid;
+    if (sockets == NULL || number_of_sockets < 1)
+    {
+        HK_LOGD("Cant notify, because nothing is subscribed for chr %d.%d.", aid, iid);
+        return ret;
+    }
 
     cJSON *j_chr = cJSON_CreateObject();
-    cJSON_AddNumberToObject(j_chr, "aid", aid);
-    cJSON_AddNumberToObject(j_chr, "iid", iid);
+    cJSON_AddNumberToObject(j_chr, "aid", (const double)aid);
+    cJSON_AddNumberToObject(j_chr, "iid", (const double)iid);
     cJSON_AddNumberToObject(j_chr, "status", 0); // todo: is this needed?
     hk_accessories_serializer_value(chr, j_chr);
 
@@ -112,39 +118,37 @@ void hk_chrs_notify(void *chr_ptr)
     char *serialized = cJSON_PrintUnformatted(j_root);
     cJSON_Delete(j_root);
 
-    hk_ll_foreach(session_list, current_session)
+    for (size_t i = 0; i < number_of_sockets; i++)
     {
-        hk_session_t *session = *current_session;
-        hk_mem_append_string(session->response->content, (const char *)serialized);
-        hk_html_append_response_start(session, HK_HTML_PROT_EVENT, HK_HTML_200);
-        hk_html_append_header(session, "Content-Type", HK_HTML_CONTENT_JSON);
-        HK_LOGD("%d - Sending change notification: %s (%x)", session->socket, serialized, (uint)session);
-        hk_html_response_send(session);
+        hk_mem *message = hk_mem_init(); // is freed after being sent
+        hk_mem_append_string(message, "EVENT/1.0 200 OK\n");
+        hk_mem_append_string(message, "Content-Type: application/hap+json\n");
+        hk_mem_append_string(message, "Content-Length: ");
+        char content_length[20];
+        sprintf(content_length, "%d\n\n", strlen(serialized));
+        hk_mem_append_string(message, content_length);
+        hk_mem_append_string(message, (const char *)serialized);
+        HK_LOGD("%d - Sending change notification.", sockets[i]);
+        RUN_AND_CHECK(ret, hk_server_send_async, sockets[i], message);
     }
 
     free(serialized);
+    return ret;
 }
 
-void hk_chrs_write(hk_session_t *session, cJSON *j_chr)
+static esp_err_t hk_chrs_write(int socket, int aid, int iid, cJSON *j_chr)
 {
     esp_err_t ret = ESP_OK;
-
-    cJSON *j_aid = cJSON_GetObjectItem(j_chr, "aid");
-    int aid = j_aid->valueint;
-
-    cJSON *j_iid = cJSON_GetObjectItem(j_chr, "iid");
-    int iid = j_iid->valueint;
-
     hk_chr_t *chr = hk_accessories_store_get_chr(aid, iid);
     if (chr == NULL)
     {
-        HK_LOGE("Could not find chr %d.%d.", aid, iid);
+        HK_LOGE("%d - Could not find chr %d.%d.", socket, aid, iid);
         ret = ESP_FAIL;
     }
 
     if (chr->write == NULL)
     {
-        HK_LOGE("Could not write chr %d.%d. It has no write function.", aid, iid);
+        HK_LOGE("%d - Could not write chr %d.%d. It has no write function.", socket, aid, iid);
         ret = ESP_FAIL;
     }
 
@@ -172,7 +176,7 @@ void hk_chrs_write(hk_session_t *session, cJSON *j_chr)
             }
             else
             {
-                HK_LOGE("Failed to update %d.%d: value is not a boolean or 0/1", aid, iid);
+                HK_LOGE("%d - Failed to update %d.%d: value is not a boolean or 0/1", socket, aid, iid);
                 ret = ESP_FAIL;
             }
             hk_mem_append_buffer(write_request, (char *)&bool_value, sizeof(bool));
@@ -186,7 +190,7 @@ void hk_chrs_write(hk_session_t *session, cJSON *j_chr)
             // instead of an integer of value 0 or 1.
             if (j_value->type != cJSON_Number && j_value->type != cJSON_False && j_value->type != cJSON_True)
             {
-                HK_LOGE("Failed to update %d.%d: value is not a number", aid, iid);
+                HK_LOGE("%d - Failed to update %d.%d: value is not a number", socket, aid, iid);
                 ret = ESP_FAIL;
             }
 
@@ -196,7 +200,7 @@ void hk_chrs_write(hk_session_t *session, cJSON *j_chr)
         case HK_FORMAT_FLOAT:
             if (j_value->type != cJSON_Number)
             {
-                HK_LOGE("Failed to update %d.%d: value is not a number", aid, iid);
+                HK_LOGE("%d - Failed to update %d.%d: value is not a number", socket, aid, iid);
                 ret = ESP_FAIL;
             }
 
@@ -206,153 +210,147 @@ void hk_chrs_write(hk_session_t *session, cJSON *j_chr)
         case HK_FORMAT_STRING:
             if (j_value->type != cJSON_String)
             {
-                HK_LOGE("Failed to update %d.%d: value is not a string", aid, iid);
+                HK_LOGE("%d - Failed to update %d.%d: value is not a string", socket, aid, iid);
                 ret = ESP_FAIL;
             }
 
             hk_mem_append_string(write_request, j_value->valuestring);
             break;
         case HK_FORMAT_TLV8:
-            HK_LOGW("Writing tlv not implemented.");
+            HK_LOGW("%d - Writing tlv not implemented.", socket);
             break;
         case HK_FORMAT_DATA:
-            HK_LOGW("Writing data not implemented.");
+            HK_LOGW("%d - Writing data not implemented.", socket);
             break;
         case HK_FORMAT_UNKNOWN:
-            HK_LOGE("Error: unknown format.");
+            HK_LOGE("%d - Error: unknown format.", socket);
             break;
         }
 
         if (!ret)
         {
-            HK_LOGD("%d - Writing chr %d.%d.", session->socket, aid, iid);
+            HK_LOGD("%d - Writing chr %d.%d.", socket, aid, iid);
 
             ret = chr->write(write_request);
-            if(ret == ESP_OK){
-                hk_html_response_send_empty(session, HK_HTML_204);
-                hk_chrs_notify(chr);
+            if (ret == ESP_OK)
+            {
+                //todo: hk_chrs_notify(chr);
             }
-            else{
-                HK_LOGE("Error writing characteristic.");
+            else
+            {
+                HK_LOGE("%d - Error writing characteristic.", socket);
             }
         }
 
         hk_mem_free(write_request);
     }
 
-    if (ret)
-    {
-        hk_html_response_send_empty(session, HK_HTML_500);
-    }
+    return ret;
 }
 
-void hk_chr_subscribe(hk_session_t *session, cJSON *j_chr, cJSON *j_root)
+static esp_err_t hk_chr_subscribe(int socket, int aid, int iid)
 {
-    cJSON *j_aid = cJSON_GetObjectItem(j_chr, "aid");
-    int aid = j_aid->valueint;
+    esp_err_t ret = ESP_OK;
+    HK_LOGV("%d - Subscription request for chr %d.%d.", socket, aid, iid);
 
-    cJSON *j_iid = cJSON_GetObjectItem(j_chr, "iid");
-    int iid = j_iid->valueint;
-
-    HK_LOGD("%d - Subscription request for chr %d.%d.", session->socket, aid, iid);
     hk_chr_t *chr = hk_accessories_store_get_chr(aid, iid);
     if (chr == NULL)
     {
         HK_LOGE("Could not find chr %d.%d.", aid, iid);
-        return;
+        ret = ESP_ERR_NOT_FOUND;
     }
 
-    hk_subscription_store_add_session(chr, session);
+    RUN_AND_CHECK(ret, hk_subscription_store_add, chr, socket);
 
-    hk_html_response_send_empty(session, HK_HTML_204);
-
-    hk_chrs_notify(chr);
+    //todo: hk_chrs_notify(chr);
+    return ret;
 }
 
-void hk_chr_unsubscribe(hk_session_t *session, cJSON *j_chr)
+static esp_err_t hk_chr_unsubscribe(int socket, int aid, int iid)
 {
-    cJSON *j_aid = cJSON_GetObjectItem(j_chr, "aid");
-    int aid = j_aid->valueint;
-
-    cJSON *j_iid = cJSON_GetObjectItem(j_chr, "iid");
-    int iid = j_iid->valueint;
-
+    esp_err_t ret = ESP_OK;
     hk_chr_t *chr = hk_accessories_store_get_chr(aid, iid);
-    HK_LOGD("%d - Request for removing subscription for chr %d.%d (%x).",
-            session->socket, aid, iid, (unsigned int)chr);
+    HK_LOGD("%d - Request for removing subscription for chr %d.%d (%x).", socket, aid, iid, (unsigned int)chr);
     if (chr == NULL)
     {
-        HK_LOGE("Could not find chr %d.%d.", aid, iid);
-        return;
+        HK_LOGE("%d - Could not find chr %d.%d.", socket, aid, iid);
+        ret = ESP_ERR_NOT_FOUND;
     }
 
-    hk_subscription_store_remove_session_from_subscription(chr, session);
+    RUN_AND_CHECK(ret, hk_subscription_store_remove, chr, socket);
 
-    hk_html_response_send_empty(session, HK_HTML_204);
+    return ret;
 }
 
-void hk_chrs_put(hk_session_t *session)
+esp_err_t hk_chrs_put(hk_mem *request, void *http_handle, int socket)
 {
-    session->response->content_type = HK_SESSION_CONTENT_JSON;
+    esp_err_t ret = ESP_OK;
 
-    char *content = hk_mem_to_string(session->request->content);
+    char *content = hk_mem_to_string(request);
     cJSON *j_root = cJSON_Parse((const char *)content);
     if (j_root == NULL)
     {
         HK_LOGE("Failed to parse request for chrs put.");
-        session->response->result = ESP_ERR_INVALID_ARG;
+        ret = ESP_ERR_INVALID_ARG;
     }
 
-    if (session->response->result == ESP_OK)
+    if (ret == ESP_OK)
     {
         cJSON *j_chrs = cJSON_GetObjectItem(j_root, "characteristics");
-        for (int i = 0; i < cJSON_GetArraySize(j_chrs) && session->response->result == ESP_OK; i++)
+        for (int i = 0; i < cJSON_GetArraySize(j_chrs) && ret == ESP_OK; i++)
         {
             cJSON *j_chr = cJSON_GetArrayItem(j_chrs, i);
             if (j_chr == NULL)
             {
                 HK_LOGE("Could not find first element in chrs put.");
-                session->response->result = ESP_ERR_INVALID_ARG;
+                ret = ESP_ERR_INVALID_ARG;
                 break;
             }
+
+            cJSON *j_aid = cJSON_GetObjectItem(j_chr, "aid");
+            cJSON *j_iid = cJSON_GetObjectItem(j_chr, "iid");
+
+            int aid = j_aid->valueint;
+            int iid = j_iid->valueint;
 
             if (cJSON_HasObjectItem(j_chr, "ev"))
             {
                 cJSON *j_ev = cJSON_GetObjectItem(j_chr, "ev");
+
                 if (cJSON_IsTrue(j_ev))
                 {
-                    hk_chr_subscribe(session, j_chr, j_root);
+                    RUN_AND_CHECK(ret, hk_chr_subscribe, socket, aid, iid);
                 }
                 else
                 {
-                    hk_chr_unsubscribe(session, j_chr);
+                    RUN_AND_CHECK(ret, hk_chr_unsubscribe, socket, aid, iid);
                 }
             }
             else
             {
-                hk_chrs_write(session, j_chr);
+                RUN_AND_CHECK(ret, hk_chrs_write, socket, aid, iid, j_chr);
             }
         }
     }
 
     cJSON_Delete(j_root);
     free(content);
+
+    return ret;
 }
 
-void hk_chrs_identify(hk_session_t *session)
+esp_err_t hk_chrs_identify(int socket)
 {
     hk_chr_t *chr = hk_accessories_store_get_identify_chr();
     if (chr == NULL)
     {
         HK_LOGE("Could not find identify chr.");
-        session->response->result = ESP_ERR_NOT_FOUND;
+        return ESP_ERR_NOT_FOUND;
     }
 
-    if (session->response->result == ESP_OK)
-    {
-        HK_LOGE("%d - Calling write on identify chr!", session->socket);
-        chr->write(NULL);
-    }
+    esp_err_t ret = ESP_OK;
+    HK_LOGD("%d - Calling write on identify chr!", socket);
+    RUN_AND_CHECK(ret, chr->write, NULL);
 
-    hk_session_send(session);
+    return ret;
 }
