@@ -1,4 +1,4 @@
-menu "ESP32_HAP"
+menu "Homekit"
 
     choice ESP32_HAP_STACK
         prompt "The stack to use for Homekit"

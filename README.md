@@ -1,23 +1,42 @@
-# esp32-homekit
-ESP-32 implementation of Apple Homekit Accessory Protocol(HAP).
+# ESP 32 Homekit stack
+ESP-32 implementation of Apple Homekit Accessory Protocol(HAP). It supports Homekit via Bluetooth and wlan.
 
-The following guides were written and tested on MacOs.
+# Getting started
+1. Setup Espressif development environment. Go through steps 1 to 10 in this [guide (v4.2)](https://docs.espressif.com/projects/esp-idf/en/v4.2/esp32/get-started/index.html).
+2. Make your project directory a git repository:
+   ```
+   %> git init
+   %> echo 'build' > .gitignore
+   ```
+3. Install submodules in the project you just created ($IDF_PATH/examples/get-started/hello_world). To do this, isssue:
 
-## Usage
-To use the component on macos/linux, do the following:
-1. Setup Espressif development environment. This project is tested with ESP-IDF version 4.1: https://docs.espressif.com/projects/esp-idf/en/latest/get-started/index.html#
-1. Create your application
-1. Install submodules
-    git submodule add https://github.com/slompf18/esp32_hap_wolfssl.git components/esp32_hap_wolfssl
-    git submodule add https://github.com/slompf18/esp32-homekit.git components/esp32-homekit
+    ```bash
+    %> git submodule add https://github.com/slompf18/esp32_hap_wolfssl.git components/esp32_hap_wolfssl
+    %> git submodule add https://github.com/slompf18/esp32_hap.git components/esp32_hap
+    ```
+4. Overwrite the content of 'hello_world_main.c' with the content of 'examples\simple_switch_ble.c' of this repository.
+5. Add the following line into CMakeLists.txt to add the esp32_hap component:
+   ```
+    set(COMPONENTS esptool_py esp32 esp32_hap main)
+    ```
+6. Enable Bluetooth LE by opening the configuration `idf.py menuconfig`. Then select:
+    1. Component config -> Bluetooth: Enable
+    2. Component config -> Bluetooth -> Bluetooth Host: NimBLE - BLE only
+    3. Save and Quit.
+7. Connect an led to GND and IO 19 of your ESP32.
+7. Flash and monitor the project to the esp.
 
-## Build and run
-1. cd to the project directory.
-2. Restore environment: . ~/esp/esp-idf/export.sh
-3. Build the project (optional): idf.py
-4. Find out the port of your device: /dev/tty* (something like /dev/tty.SLAB_USBtoUART)
-5. Flash and monitor the project to the esp: idf.py -p /dev/tty.SLAB_USBtoUART flash monitor
-6. Stop it by pressing Ctrl + ]
+# Bluetooth or Wlan
+When starting your project you will have to choose, which stack you want to use. You can choose your stack by calling `idf.py menuconfig` and selecting the option under the 'Homekit' menu entry. Here are the different advantages:
+
+## Bluetooth
+- Easy configuration
+- Uses less ressources
+
+## Wlan
+- Higher range
+
+# Develop
 
 ## Unit testing
 1. cd into the test_runner directory

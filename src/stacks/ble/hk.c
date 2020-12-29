@@ -166,7 +166,7 @@ esp_err_t hk_setup_add_chr(hk_chr_types_t type, esp_err_t(*read)(hk_mem *respons
 esp_err_t hk_setup_finish()
 {
     hk_gatt_end_config();
-    ESP_LOGD("homekit", "Set up.");
+    HK_LOGW("Set up.");
 
     return ESP_OK;
 }
