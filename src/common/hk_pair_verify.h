@@ -19,6 +19,7 @@
  * @param request The request send from the controller.
  * @param request The response to be sent to the controller.
  * @param keys The keys of the connection.
+ * @param device_id Provided buffer for reading device id.
  * @param is_session_encrypted Sets the encrypted status.
  */
-esp_err_t hk_pair_verify(hk_mem *request, hk_mem *result, hk_conn_key_store_t *keys, bool *is_session_encrypted);
+esp_err_t hk_pair_verify(hk_mem *request, hk_mem *result, hk_conn_key_store_t *keys, hk_mem *device_id, bool *is_session_encrypted);

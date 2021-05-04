@@ -89,7 +89,7 @@ void hk_uuids_to_name(const ble_uuid128_t *uuid, char str[40])
             sprintf(str, "SERVICE_SIGNATURE");
             break;
         default:
-            sprintf(str, "Unknown");
+            sprintf(str, "HAP 0x%X", uuid->value[12]);
             break;
         }
     }

@@ -154,13 +154,12 @@ esp_err_t hk_pair_verify_start(hk_conn_key_store_t *keys, hk_tlv_t *request_tlvs
     return ret;
 }
 
-esp_err_t hk_pair_verify_finish(hk_conn_key_store_t *keys, hk_tlv_t *request_tlvs, hk_mem *response)
+esp_err_t hk_pair_verify_finish(hk_conn_key_store_t *keys, hk_mem *device_id, hk_tlv_t *request_tlvs, hk_mem *response)
 {
     HK_LOGV("Now running pair verify finish.");
     hk_ed25519_key_t *device_long_term_key = hk_ed25519_init();
     hk_mem *device_long_term_key_public = hk_mem_init();
     hk_mem *device_info = hk_mem_init();
-    hk_mem *device_id = hk_mem_init();
 
     hk_mem *encrypted_data = hk_mem_init();
     hk_mem *decrypted_data = hk_mem_init();
@@ -211,7 +210,6 @@ esp_err_t hk_pair_verify_finish(hk_conn_key_store_t *keys, hk_tlv_t *request_tlv
     hk_mem_free(decrypted_data);
     hk_mem_free(device_signature);
     hk_mem_free(device_long_term_key_public);
-    hk_mem_free(device_id);
 
     return ret;
 }
@@ -320,7 +318,7 @@ esp_err_t hk_pair_verify_resume(hk_conn_key_store_t *keys, hk_tlv_t *request_tlv
     return ret;
 }
 
-esp_err_t hk_pair_verify(hk_mem *request, hk_mem *result, hk_conn_key_store_t *keys, bool *is_session_encrypted)
+esp_err_t hk_pair_verify(hk_mem *request, hk_mem *result, hk_conn_key_store_t *keys, hk_mem *device_id, bool *is_session_encrypted)
 {
     esp_err_t ret = ESP_OK;
     hk_tlv_t *tlv_data_request = hk_tlv_deserialize(request);
@@ -359,7 +357,7 @@ esp_err_t hk_pair_verify(hk_mem *request, hk_mem *result, hk_conn_key_store_t *k
         }
         case HK_PAIR_TLV_STATE_M3:
         {
-            ret = hk_pair_verify_finish(keys, tlv_data_request, result);
+            ret = hk_pair_verify_finish(keys, device_id, tlv_data_request, result);
 
             if (ret == ESP_OK)
             {

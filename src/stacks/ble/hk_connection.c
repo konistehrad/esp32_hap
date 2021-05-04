@@ -97,6 +97,7 @@ hk_connection_t *hk_connection_init(uint16_t handle, hk_mem *address)
     connection->security_keys = hk_conn_key_store_init();
     connection->transactions = NULL;
     connection->mtu_size = (uint8_t)256;
+    connection->device_id = hk_mem_init();
 
     return connection;
 }
@@ -124,5 +125,6 @@ void hk_connection_free(uint16_t handle)
     hk_conn_key_store_free(connection->security_keys);
 
     hk_connection_connections = hk_ll_remove(hk_connection_connections, connection);
+    hk_mem_free(connection->device_id);
     HK_LOGD("%d - Connection closed.", handle);
 }
