@@ -59,6 +59,7 @@ esp_err_t hk_chr_signature_read(const ble_uuid128_t *chr_uuid, hk_transaction_t 
         tlv_data_response = hk_tlv_add_buffer(tlv_data_response, 0x0d, (void *)range, sizeof(int32_t) * 2);
         break;
     }
+    case HK_FORMAT_FLOAT_CELSIUS:
     case HK_FORMAT_FLOAT:
     {
         float range[2];
