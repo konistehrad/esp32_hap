@@ -186,7 +186,9 @@ static esp_err_t hk_gap_start_advertising_internal(hk_mem *manufacturer_data, bo
     memset(&adv_params, 0, sizeof adv_params);
     adv_params.conn_mode = BLE_GAP_CONN_MODE_UND;
     adv_params.disc_mode = BLE_GAP_DISC_MODE_GEN;
-    //adv_params.itvl_min = 20;
+    /* Advertise within the range of the chosen interval */
+    adv_params.itvl_min = 1280/2;
+    adv_params.itvl_max = 1280;
     err = ble_gap_adv_start(hk_gap_own_addr_type, NULL, BLE_HS_FOREVER, &adv_params, hk_gap_gap_event, NULL);
     if (err)
     {
