@@ -67,6 +67,11 @@ void hk_nimble_init()
     ble_hs_cfg.sm_io_cap = 3;
     ble_hs_cfg.sm_sc = 0;
 
+    /* Enable bonding */
+    ble_hs_cfg.sm_bonding = 1;
+    ble_hs_cfg.sm_our_key_dist = 1;
+    ble_hs_cfg.sm_their_key_dist = 1;
+
     /* Need to have template for store */
     ble_store_config_init();
 }
