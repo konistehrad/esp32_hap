@@ -430,16 +430,16 @@ void hk_gatt_chr_init(
     const ble_uuid128_t *srv_uuid,
     const ble_uuid128_t *chr_uuid,
     ble_gatt_chr_flags flags,
-    hk_chr_t *chr)
+    hk_chr_t *chr,
+    uint8_t number_of_descriptors)
 {
     ble_chr->uuid = &chr_uuid->u;
     ble_chr->access_cb = hk_gatt_access_callback;
     ble_chr->flags = flags;
     ble_chr->arg = (void *)chr;
 
-    uint8_t number_of_descriptors = 2; // one for instance id and one for array end marker
-
-    size_t memory_size = number_of_descriptors * sizeof(hk_ble_descriptor_t);
+    // Add an empty descriptor as an array end marker
+    size_t memory_size = (number_of_descriptors + 1) * sizeof(hk_ble_descriptor_t);
     ble_chr->descriptors = (hk_ble_descriptor_t *)malloc(memory_size);
     memset((void *)ble_chr->descriptors, 0, memory_size); // set everything to zero. Especially important for array end marker
 
@@ -483,7 +483,7 @@ void hk_gatt_add_srv(hk_srv_types_t srv_type, bool primary, bool hidden,
     chr->srv_primary = hk_gatt_setup_info->srv_primary = primary;
     chr->srv_hidden = hk_gatt_setup_info->srv_hidden = hidden;
     chr->srv_supports_configuration = hk_gatt_setup_info->srv_supports_configuration = supports_configuration;
-    hk_gatt_chr_init(ble_chr, BLE_UUID128(srv->uuid), &hk_uuids_srv_id, BLE_GATT_CHR_F_READ, chr);
+    hk_gatt_chr_init(ble_chr, BLE_UUID128(srv->uuid), &hk_uuids_srv_id, BLE_GATT_CHR_F_READ, chr, 1);
 }
 
 esp_err_t hk_gatt_add_chr(
@@ -526,7 +526,8 @@ esp_err_t hk_gatt_add_chr(
         BLE_UUID128(current_srv->uuid),
         chr_uuid,
         flags,
-        chr);
+        chr,
+        1);
 
     *chr_ptr = chr;
 
@@ -553,7 +554,8 @@ void hk_gatt_add_chr_static_read(hk_chr_types_t chr_type, const char *value)
         BLE_UUID128(current_srv->uuid),
         chr_uuid,
         BLE_GATT_CHR_F_READ | BLE_GATT_CHR_F_WRITE | BLE_GATT_CHR_PROP_READ,
-        chr);
+        chr,
+        1);
 }
 
 void hk_gatt_end_config()

@@ -283,3 +283,63 @@ uint16_t hk_chrs_properties_get_prop(hk_chr_types_t chr_type)
         return -1;
     }
 }
+
+#define desc_valid_range(desc, t, min, max) { \
+ (desc)->type = HK_DESC_VALID_RANGE; \
+ t *data = malloc(sizeof(t) * 2); \
+ data[0] = (min); \
+ data[1] = (max); \
+ (desc)->data.ptr = (char *)data; \
+ (desc)->data.size = sizeof(t) * 2; \
+}
+
+#define desc_step_value(desc, t, v) { \
+ (desc)->type = HK_DESC_STEP_VALUE; \
+ t *data = malloc(sizeof(t)); \
+ data[0] = (v); \
+ (desc)->data.ptr = (char *)data; \
+ (desc)->data.size = sizeof(t); \
+}
+
+#define desc_valid_values(desc, t, v, num) { \
+ (desc)->type = HK_DESC_VALID_VALUES; \
+ (desc)->data.ptr = malloc(sizeof(t) * num); \
+ memcpy((desc)->data.ptr, v, sizeof(t) * num); \
+ (desc)->data.size = sizeof(t) * num; \
+}
+
+hk_desc_t *hk_chrs_properties_descriptors(hk_chr_types_t chr_type, size_t *result_len)
+{
+    hk_desc_t *descs = NULL;
+    *result_len = 0;
+
+    switch (chr_type)
+    {
+    case HK_CHR_TARGET_HEATER_COOLER_STATE:
+        descs = malloc(3 * sizeof(hk_desc_t));
+        desc_valid_range(descs + 0, uint8_t, 0, 2);
+        desc_step_value(descs + 1, uint8_t, 1);
+        // TODO: configure the heat/cool/heat-or-cool here
+        //desc_valid_values(descs + 2, uint8_t, "\0\1\2", 3);
+        desc_valid_values(descs + 2, uint8_t, "\1", 1);
+        *result_len = 3;
+        break;
+    case HK_CHR_CURRENT_HEATER_COOLER_STATE:
+        descs = malloc(3 * sizeof(hk_desc_t));
+        desc_valid_range(descs + 0, uint8_t, 0, 3);
+        desc_step_value(descs + 1, uint8_t, 1);
+        desc_valid_values(descs + 2, uint8_t, "\0\1\2\3", 4);
+        *result_len = 3;
+        break;
+    case HK_CHR_HEATING_THRESHOLD_TEMPERATURE:
+        descs = malloc(2 * sizeof(hk_desc_t));
+        desc_valid_range(descs + 0, float, 0, 25);
+        desc_step_value(descs + 1, float, 0.1);
+        *result_len = 2;
+        break;
+    default:
+        break;
+    }
+
+    return descs;
+}
