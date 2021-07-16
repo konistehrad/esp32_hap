@@ -190,6 +190,8 @@ uint16_t hk_chrs_properties_get_prop(hk_chr_types_t chr_type)
     case HK_CHR_CURRENT_TEMPERATURE:
     case HK_CHR_CURRENT_RELATIVE_HUMIDITY:
     case HK_CHR_MOTION_DETECTED:
+    case HK_CHR_STATUS_LOW_BATTERY:
+    case HK_CHR_BATTERY_LEVEL:
         return HK_CHR_PROP_SUPPORTS_SECURE_READS 
         | HK_CHR_PROP_NOTIFIES_EVENTS_CONNECTED_STATE
         | HK_CHR_PROP_NOTIFIES_EVENTS_DISCONNECTED_STATE
@@ -211,7 +213,6 @@ uint16_t hk_chrs_properties_get_prop(hk_chr_types_t chr_type)
     case HK_CHR_AIR_PARTICULATE_SIZE:
     case HK_CHR_SECURITY_SYSTEM_CURRENT_STATE:
     case HK_CHR_SECURITY_SYSTEM_TARGET_STATE:
-    case HK_CHR_BATTERY_LEVEL:
     case HK_CHR_CARBON_MONOXIDE_DETECTED:
     case HK_CHR_CONTACT_SENSOR_STATE:
     case HK_CHR_CURRENT_POSITION:
@@ -222,7 +223,6 @@ uint16_t hk_chrs_properties_get_prop(hk_chr_types_t chr_type)
     case HK_CHR_SMOKE_DETECTED:
     case HK_CHR_STATUS_FAULT:
     case HK_CHR_STATUS_JAMMED:
-    case HK_CHR_STATUS_LOW_BATTERY:
     case HK_CHR_STATUS_TAMPERED:
     case HK_CHR_TARGET_POSITION:
     case HK_CHR_SECURITY_SYSTEM_ALARM_TYPE:
