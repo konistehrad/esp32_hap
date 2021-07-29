@@ -69,6 +69,15 @@ typedef struct
  */
  hk_format_t hk_chrs_properties_get_type(hk_chr_types_t chr_type);
 
+ /**
+ * @brief Returns the name of a characteristic
+ *
+ * @param chr_type The type of the characteristic.
+ * 
+ * @return Returns the name.
+ */
+ const char* hk_chrs_properties_get_name(hk_chr_types_t chr_type);
+
 /**
  * @brief Returns the properties of a characteristic type
  *

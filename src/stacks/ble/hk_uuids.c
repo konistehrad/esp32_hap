@@ -3,6 +3,7 @@
 #include "../../utils/hk_ll.h"
 #include "../../utils/hk_logging.h"
 #include "../../include/hk_chrs.h"
+#include "../../common/hk_chrs_properties.h"
 
 ble_uuid128_t *hk_uuids_uuids;
 
@@ -44,6 +45,7 @@ void hk_uuids_to_name(const ble_uuid128_t *uuid, char str[40])
     }
     else
     {
+        const char *name = hk_chrs_properties_get_name(uuid->value[12]);
         switch (uuid->value[12])
         { //todo: move to hk_chrs
         case HK_CHR_IDENTIFY:
@@ -89,7 +91,11 @@ void hk_uuids_to_name(const ble_uuid128_t *uuid, char str[40])
             sprintf(str, "SERVICE_SIGNATURE");
             break;
         default:
-            sprintf(str, "HAP 0x%X", uuid->value[12]);
+            if (name == NULL) {
+                sprintf(str, "HAP 0x%X", uuid->value[12]);
+            } else {
+                sprintf(str, name);
+            }
             break;
         }
     }

@@ -230,7 +230,7 @@ static int hk_gatt_write_ble_chr(uint16_t handle, struct ble_gatt_access_ctxt *c
             break;
         case 3:
             HK_LOGD("Characteristic read for %s.", uuid_name);
-            ret = hk_chr_read(transaction, chr);;
+            ret = hk_chr_read(transaction, chr);
             break;
         case 4:
             HK_LOGD("Characteristic timed write for %s.", uuid_name);

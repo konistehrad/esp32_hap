@@ -21,6 +21,7 @@ esp_err_t hk_chr_read(hk_transaction_t *transaction, hk_chr_t *chr)
         ret = chr->read_callback(read_response);
     }
 
+    HK_LOGD("Characteristic read returned %d response size %u", ret, read_response->size);
     if (ret == ESP_OK)
     {
         if (read_response->size > 0)
