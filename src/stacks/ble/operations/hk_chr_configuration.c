@@ -12,7 +12,7 @@ esp_err_t hk_chr_configuration(hk_transaction_t *transaction, hk_chr_t *chr)
 
     hk_tlv_t *tlv_data_response = NULL;
     tlv_data_response = hk_tlv_add_uint16(tlv_data_response, 0x01, 1); // 1 = enable broadcast
-    tlv_data_response = hk_tlv_add_uint8(tlv_data_response, 0x02, 3); // 1 = 20ms (default)
+    tlv_data_response = hk_tlv_add_uint8(tlv_data_response, 0x01, 3); // 1 = 20ms (default)
     
     hk_tlv_serialize(tlv_data_response, transaction->response);
 
