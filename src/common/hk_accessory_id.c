@@ -1,6 +1,7 @@
 #include "hk_accessory_id.h"
 
 #include <esp_system.h>
+#include <esp_random.h>
 
 #include "../utils/hk_store.h"
 #include "../utils/hk_util.h"

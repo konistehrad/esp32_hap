@@ -1,3 +1,5 @@
+#include <esp_random.h>
+
 #include "hk_pair_verify.h"
 
 #include "../crypto/hk_curve25519.h"

@@ -57,7 +57,9 @@ void hk_nimble_host_task(void *param)
 void hk_nimble_init()
 {
     HK_LOGD("Initializing nimble.");
-    ESP_ERROR_CHECK(esp_nimble_hci_and_controller_init());
+    // removed; called by port_init
+    // https://github.com/espressif/esp-idf/issues/9420#issuecomment-1193529011
+    // ESP_ERROR_CHECK(esp_nimble_hci_and_controller_init());
     nimble_port_init();
 
     /* Initialize the NimBLE host configuration. */

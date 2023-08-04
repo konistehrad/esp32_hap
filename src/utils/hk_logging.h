@@ -6,12 +6,13 @@
 
 #pragma once
 
+#include <stdbool.h> 
 #include <esp_log.h>
 #include <esp_err.h>
 #include <stdlib.h>
 #include <string.h>
 
-#define __FILENAME__ (strstr(__FILE__, "/hk_") ? strstr(__FILE__, "/hk_") + 1 : __FILE__) // write reverse strstr and use / instead of /hk_
+// #define __FILENAME__ (strstr(__FILE__, "/hk_") ? strstr(__FILE__, "/hk_") + 1 : __FILE__) // write reverse strstr and use / instead of /hk_
 #define TAG  "hk"
 
 /**

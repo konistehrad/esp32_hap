@@ -39,7 +39,7 @@ esp_err_t hk_chr_timed_write(hk_transaction_t *transaction, hk_chr_t *chr)
         time_t now;
         time(&now);
         time_of_death = now + ttl;
-        HK_LOGD("Timed write requested. Now: %ld, Time to live: %d, Time of death: %ld", now, ttl, time_of_death);
+        HK_LOGD("Timed write requested. Now: %lld, Time to live: %d, Time of death: %lld", now, ttl, time_of_death);
     }
 
     hk_mem_free(ttl_mem);
@@ -56,13 +56,13 @@ esp_err_t hk_chr_execute_write(hk_connection_t *connection, hk_transaction_t *tr
 
     if (now > time_of_death)
     {
-        HK_LOGD("Time of death: %ld, Now: %ld", time_of_death, now);
+        HK_LOGD("Time of death: %lld, Now: %lld", time_of_death, now);
         HK_LOGE("Execute of timed write could not be done, as time was over.");
         ret = ESP_ERR_NOT_SUPPORTED;
     }
     else
     {
-        HK_LOGD("Executing timed write: Time of death: %ld, Now: %ld", time_of_death, now);
+        HK_LOGD("Executing timed write: Time of death: %lld, Now: %lld", time_of_death, now);
     }
 
     if (ret == ESP_OK)
